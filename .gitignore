@@ -125,6 +125,7 @@ Thumbs.db
 # Local development
 .local
 
-# Documentation files (ignore all .md except README.md)
+# Documentation files (ignore all .md except README.md and docs/)
 *.md
 !README.md
+!docs/*.md
