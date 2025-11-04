@@ -1,0 +1,994 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../ui/components/header.astro';
+import PaymentHero from '../ui/components/PaymentHero.astro';
+import PaymentsList from '../ui/components/PaymentsList.astro';
+import { requireAuthentication } from '../middleware';
+import { protectedGetCurationStats } from '../lib/auth/protected-functions';
+import type { Payment } from '../domain/models/Payment';
+
+const isAuthenticated = Astro.locals.isAuthenticated;
+const authenticatedUser: string | null = Astro.locals.user;
+
+// Todo el procesamiento de datos ahora será del lado del cliente
+// Inicializamos con arrays vacíos
+let payments: Payment[] = [];
+let error: string | null = null;
+
+console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente');
+---
+
+---
+
+<Layout title="Ejecutar Pagos - Aliento.pay">
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+    {authenticatedUser && <Header username={authenticatedUser} />}
+    <main class="container mx-auto px-4 py-8">
+      <PaymentHero />
+
+      <!-- Contenedor dinámico que se actualizará desde JavaScript -->
+      <div id="payments-content">
+        <div class="max-w-2xl mx-auto">
+          <div
+            class="bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-blue-500/20 rounded-xl p-8 text-center"
+          >
+            <div
+              class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4"
+            >
+              <svg class="w-8 h-8 text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-blue-400 mb-2">Cargando Pagos...</h3>
+            <p class="text-blue-300 mb-6">Procesando datos de distribución...</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<!-- Script para procesar datos del lado del cliente -->
+<script>
+  // @ts-nocheck
+  (function () {
+    'use strict';
+
+    console.log('� [CLIENT] Iniciando procesamiento de pagos del lado del cliente');
+
+    // Función para procesar datos de pagos
+    function processPaymentData() {
+      let paymentData = null;
+
+      // 1. Primero intentar obtener de la URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const dataParam = urlParams.get('data');
+
+      if (dataParam) {
+        console.log('� [CLIENT] Datos encontrados en URL');
+        try {
+          paymentData = JSON.parse(decodeURIComponent(dataParam));
+        } catch (e) {
+          console.error('❌ [CLIENT] Error decodificando datos de URL:', e);
+        }
+      }
+
+      // 2. Si no hay en URL, buscar en sessionStorage
+      if (!paymentData) {
+        console.log('🔍 [CLIENT] Buscando en sessionStorage...');
+        const stored = sessionStorage.getItem('payment_data');
+        if (stored) {
+          try {
+            paymentData = JSON.parse(stored);
+            console.log('✅ [CLIENT] Datos encontrados en sessionStorage');
+          } catch (e) {
+            console.error('❌ [CLIENT] Error parsing sessionStorage:', e);
+          }
+        }
+      }
+
+      if (!paymentData) {
+        console.log('❌ [CLIENT] No se encontraron datos de pago');
+        showError('No hay datos de pagos. Por favor, vuelve a calcular la distribución.');
+        return;
+      }
+
+      console.log('� [CLIENT] Procesando datos:', {
+        hasDistributions: !!paymentData.distributions,
+        distributionsCount: paymentData.distributions?.length || 0,
+        totalAmount: paymentData.totalAmount,
+        period: paymentData.period,
+        hasMetadata: !!paymentData.calculationMetadata,
+      });
+
+      // 3. Procesar distribuciones
+      if (!paymentData.distributions) {
+        console.log('❌ [CLIENT] No hay distribuciones en los datos');
+        showError('No hay distribuciones para procesar.');
+        return;
+      }
+
+      // 4. Verificar si hay payment values válidos
+      const hasValidPayments = paymentData.distributions.some(
+        dist => dist.payment && dist.payment > 0
+      );
+
+      if (!hasValidPayments) {
+        console.log('❌ [CLIENT] Todos los pagos son null o 0');
+        showError(
+          'Error: Los cálculos no generaron pagos válidos. Los valores de pago están en null.'
+        );
+        return;
+      }
+
+      // 5. Filtrar y crear objetos Payment
+      const validDistributions = paymentData.distributions.filter(dist => {
+        if (!dist.payment || dist.payment <= 0) return false;
+        const rounded = Math.round(Number(dist.payment) * 1000) / 1000;
+        return rounded > 0;
+      });
+
+      console.log('✅ [CLIENT] Distribuciones válidas:', validDistributions.length);
+
+      const payments = validDistributions.map((dist, index) => ({
+        id: `payment-${index}-${Date.now()}`,
+        to: dist.username,
+        amount: Number(dist.payment),
+        currency: 'HIVE',
+        memo: `Pago de curación ${paymentData.period || ''} - Aliento.pay`,
+        status: 'pending',
+      }));
+
+      console.log('� [CLIENT] Pagos procesados:', {
+        validPayments: payments.length,
+        totalAmount: payments.reduce((sum, p) => sum + p.amount, 0).toFixed(3),
+        firstPayment: payments[0] ? { to: payments[0].to, amount: payments[0].amount } : null,
+      });
+
+      // 6. Mostrar la lista de pagos
+      showPaymentsList(payments);
+
+      // 7. Hacer disponible globalmente
+      window.currentPayments = payments;
+      window.currentPaymentBatch = null;
+      window.isGroupView = false;
+    }
+
+    // Función para mostrar error
+    function showError(message) {
+      const content = document.getElementById('payments-content');
+      if (!content) return;
+
+      content.innerHTML = `
+        <div class="max-w-2xl mx-auto">
+          <div class="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 backdrop-blur-sm border border-amber-500/20 rounded-xl p-8 text-center">
+            <div class="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg class="w-8 h-8 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-amber-400 mb-2">Error en Datos de Pago</h3>
+            <p class="text-amber-300 mb-6">${message}</p>
+            <a href="/calculate" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Ir a calcular distribución
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    // Función para mostrar la lista de pagos
+    function showPaymentsList(payments) {
+      const content = document.getElementById('payments-content');
+      if (!content) return;
+
+      // Crear el HTML de la lista de pagos
+      const paymentItemsHTML = payments
+        .map(
+          (payment, index) => `
+        <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50 hover:bg-gray-700/50 transition-colors">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="relative w-8 h-8" data-username="${payment.to}">
+                <div class="avatar-fallback w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                  <span class="text-blue-400 text-sm font-bold">${index + 1}</span>
+                </div>
+                <div class="avatar-img absolute inset-0"></div>
+              </div>
+              <div>
+                <div class="font-medium text-white">@${payment.to}</div>
+                <div class="text-xs text-gray-400 truncate max-w-xs">${payment.memo}</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-yellow-400">${payment.amount.toFixed(3)} HIVE</div>
+              <div class="text-xs text-gray-400 capitalize">${payment.status}</div>
+            </div>
+          </div>
+        </div>
+      `
+        )
+        .join('');
+
+      content.innerHTML = `
+        <div class="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-600/30 rounded-xl p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+              </svg>
+              Lista de Pagos
+            </h3>
+            <div class="text-sm text-gray-400">
+              ${payments.length} transferencias
+            </div>
+          </div>
+          
+          <div class="max-h-96 overflow-y-auto space-y-2">
+            ${paymentItemsHTML}
+          </div>
+        </div>
+      `;
+    }
+
+    // Ejecutar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', processPaymentData);
+    } else {
+      processPaymentData();
+    }
+  })();
+</script>
+
+<script>
+  // @ts-nocheck
+  // Script principal para manejar pagos con Keychain
+  let isGroupView = false;
+  let currentUser = null;
+  let observer = null;
+
+  // 🆕 Variables para pagos por lotes
+  let batchPaymentInProgress = false;
+  let currentBatchIndex = 0;
+  let batchResults = [];
+  let paymentBatches = [];
+  const BATCH_SIZE = 20;
+
+  // Función para mostrar notificaciones
+  function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 w-full max-w-sm pointer-events-auto
+      rounded-xl backdrop-blur-md bg-gray-900/90 ring-1 ring-white/10 text-white shadow-2xl
+      flex overflow-hidden transition-transform duration-300 ease-out translate-x-4 opacity-0`;
+
+    // Forzar reflow para que la animación se aplique luego añadir clases finales
+    void notification.offsetWidth;
+    notification.classList.remove('translate-x-4', 'opacity-0');
+    notification.classList.add('translate-x-0', 'opacity-100');
+
+    // Color accent bar a la izquierda
+    const accentColor =
+      type === 'success'
+        ? 'bg-green-500'
+        : type === 'error'
+          ? 'bg-red-500'
+          : type === 'warning'
+            ? 'bg-yellow-500'
+            : 'bg-blue-500';
+
+    notification.innerHTML = `
+      <div class="${accentColor} w-1"></div>
+      <div class="flex-1 flex items-start gap-3 p-4">
+        <div class="text-xl">
+          ${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}
+        </div>
+        <div class="flex-1 text-sm leading-snug">${message.replace(/\n/g, '<br/>')}</div>
+        <button class="text-white/60 hover:text-white" onclick="this.closest('div[role=alert]').remove()">✕</button>
+      </div>`;
+    notification.setAttribute('role', 'alert');
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+      if (notification.parentElement) {
+        notification.remove();
+      }
+    }, 5000);
+  }
+
+  // 🆕 Función para crear lotes de pagos de 20 usuarios
+  function createPaymentBatches(payments) {
+    const batches = [];
+    // Ordenar del final hacia el principio (como solicitas)
+    const sortedPayments = [...payments].reverse();
+
+    for (let i = 0; i < sortedPayments.length; i += BATCH_SIZE) {
+      const batch = sortedPayments.slice(i, i + BATCH_SIZE);
+      batches.push({
+        index: Math.floor(i / BATCH_SIZE),
+        payments: batch,
+        status: 'pending', // pending, processing, completed, failed
+        result: null,
+        usernames: batch.map(p => p.to),
+        totalAmount: batch.reduce((sum, p) => sum + p.amount, 0).toFixed(3),
+      });
+    }
+
+    return batches;
+  }
+
+  // 🆕 Función para mostrar el progreso de lotes
+  function updateBatchProgress() {
+    const batchProgressEl = document.getElementById('batch-progress');
+    if (!batchProgressEl || paymentBatches.length === 0) return;
+
+    const completed = paymentBatches.filter(b => b.status === 'completed').length;
+    const failed = paymentBatches.filter(b => b.status === 'failed').length;
+    const processing = paymentBatches.filter(b => b.status === 'processing').length;
+    const pending = paymentBatches.filter(b => b.status === 'pending').length;
+    const canceled = paymentBatches.filter(b => b.result?.canceled).length;
+
+    const progressPercent = ((completed + failed) / paymentBatches.length) * 100;
+
+    batchProgressEl.innerHTML = `
+      <div class="bg-gray-800 rounded-lg p-4 mb-4">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-medium text-gray-300">Progreso de Lotes</span>
+          <span class="text-sm text-gray-400">${completed + failed}/${paymentBatches.length} procesados</span>
+        </div>
+        
+        <div class="w-full bg-gray-700 rounded-full h-2 mb-3">
+          <div class="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-500" 
+               style="width: ${progressPercent}%"></div>
+        </div>
+        
+        <div class="grid grid-cols-5 gap-2 text-center text-xs">
+          <div class="bg-green-900/30 rounded px-2 py-1">
+            <div class="text-green-400 font-bold">${completed}</div>
+            <div class="text-green-300">Exitosos</div>
+          </div>
+          <div class="bg-red-900/30 rounded px-2 py-1">
+            <div class="text-red-400 font-bold">${failed}</div>
+            <div class="text-red-300">Fallidos</div>
+          </div>
+          <div class="bg-blue-900/30 rounded px-2 py-1">
+            <div class="text-blue-400 font-bold">${processing}</div>
+            <div class="text-blue-300">Procesando</div>
+          </div>
+          <div class="bg-gray-600/30 rounded px-2 py-1">
+            <div class="text-gray-400 font-bold">${pending}</div>
+            <div class="text-gray-300">Pendientes</div>
+          </div>
+          <div class="bg-yellow-900/30 rounded px-2 py-1">
+            <div class="text-yellow-400 font-bold">${canceled}</div>
+            <div class="text-yellow-300">Cancelados</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 🆕 Función para ejecutar un lote específico de pagos
+  async function executeBatchPayment(batchIndex) {
+    const batch = paymentBatches[batchIndex];
+    if (!batch || batch.status === 'completed') return;
+
+    batch.status = 'processing';
+    updateBatchProgress();
+
+    try {
+      showNotification(
+        `Procesando lote ${batchIndex + 1}/${paymentBatches.length} (${batch.payments.length} usuarios)...`,
+        'info'
+      );
+
+      // Construir operaciones para requestBroadcast
+      const operations = batch.payments.map(payment => [
+        'transfer',
+        {
+          from: currentUser,
+          to: payment.to,
+          amount: `${payment.amount.toFixed(3)} HIVE`,
+          memo: payment.memo || 'Pago de curación - Aliento.pay',
+        },
+      ]);
+
+      // Debug: mostrar las operaciones que se van a enviar
+      console.log(`🚀 [BATCH ${batchIndex + 1}] Enviando operaciones:`, operations.slice(0, 3)); // Mostrar solo las primeras 3 para no llenar la consola
+
+      // Usar directamente requestBroadcast de Keychain
+      const result = await new Promise((resolve, reject) => {
+        if (!window.hive_keychain) {
+          reject(new Error('Hive Keychain no está disponible'));
+          return;
+        }
+
+        window.hive_keychain.requestBroadcast(currentUser, operations, 'active', response => {
+          if (response.success) {
+            resolve(response);
+          } else {
+            reject(new Error(response.message || response.error || 'Error desconocido'));
+          }
+        });
+      });
+
+      if (result.success) {
+        batch.status = 'completed';
+        batch.result = result;
+
+        // Marcar pagos individuales como exitosos
+        batch.payments.forEach(payment => {
+          payment.status = 'success';
+          payment.transactionId = result.result?.id;
+        });
+
+        showNotification(
+          `✅ Lote ${batchIndex + 1} completado exitosamente!\n` +
+            `💰 ${batch.totalAmount} HIVE distribuidos entre ${batch.payments.length} usuarios\n` +
+            `🔗 TX: ${result.result?.id}`,
+          'success'
+        );
+
+        batchResults.push({
+          batchIndex,
+          success: true,
+          transactionId: result.result?.id,
+          payments: batch.payments.length,
+          amount: batch.totalAmount,
+        });
+      }
+    } catch (error) {
+      console.log(`ℹ️ [BATCH ${batchIndex + 1}] Respuesta:`, error.message);
+
+      if (error.message && error.message.includes('Request was canceled by the user')) {
+        // Cancelación normal del usuario - no es un error
+        console.log(`👤 [BATCH ${batchIndex + 1}] Usuario canceló la operación`);
+        batch.status = 'pending'; // Volver a estado pendiente para poder reintentarlo
+        batch.result = { canceled: true };
+
+        showNotification(`Lote ${batchIndex + 1} cancelado por el usuario`, 'info');
+        batchPaymentInProgress = false;
+        return false; // Detener el proceso
+      } else {
+        // Error real
+        console.error(`❌ [BATCH ${batchIndex + 1}] Error real:`, error);
+        batch.status = 'failed';
+        batch.result = { error: error.message };
+
+        // Marcar pagos individuales como fallidos
+        batch.payments.forEach(payment => {
+          payment.status = 'error';
+          payment.error = error.message;
+        });
+
+        showNotification(`❌ Error en lote ${batchIndex + 1}: ${error.message}`, 'error');
+
+        batchResults.push({
+          batchIndex,
+          success: false,
+          error: error.message,
+          payments: batch.payments.length,
+          amount: batch.totalAmount,
+        });
+      }
+    }
+
+    updateBatchProgress();
+    updatePaymentUI();
+    return true; // Continuar con el siguiente lote
+  }
+
+  // 🆕 Función principal para ejecutar pagos por lotes
+  async function executePaymentsByBatches(startFromBatch = 0) {
+    if (batchPaymentInProgress) {
+      showNotification('Ya hay un proceso de pagos por lotes en curso', 'warning');
+      return;
+    }
+
+    if (!currentUser) {
+      showNotification('No hay usuario autenticado', 'error');
+      return;
+    }
+
+    const payments = window.currentPayments || [];
+    if (payments.length === 0) {
+      showNotification('No hay pagos para ejecutar', 'warning');
+      return;
+    }
+
+    // Crear lotes si no existen o si es la primera vez
+    if (paymentBatches.length === 0 || startFromBatch === 0) {
+      paymentBatches = createPaymentBatches(payments);
+      batchResults = [];
+      currentBatchIndex = 0;
+    }
+
+    batchPaymentInProgress = true;
+    currentBatchIndex = startFromBatch;
+
+    showNotification(
+      `🚀 Iniciando pagos por lotes desde el lote ${startFromBatch + 1}/${paymentBatches.length}\n` +
+        `📦 ${BATCH_SIZE} usuarios por lote`,
+      'info'
+    );
+
+    updateBatchProgress();
+
+    // Ejecutar lotes secuencialmente
+    for (let i = startFromBatch; i < paymentBatches.length; i++) {
+      currentBatchIndex = i;
+
+      const shouldContinue = await executeBatchPayment(i);
+      if (!shouldContinue) {
+        batchPaymentInProgress = false;
+        return; // El usuario canceló, detener el proceso
+      }
+
+      // Pequeña pausa entre lotes para no sobrecargar
+      if (i < paymentBatches.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+
+    batchPaymentInProgress = false;
+
+    // Mostrar resumen final
+    const successfulBatches = batchResults.filter(r => r.success).length;
+    const failedBatches = batchResults.filter(r => !r.success).length;
+    const canceledBatches = paymentBatches.filter(b => b.result?.canceled).length;
+    const totalSuccess = batchResults
+      .filter(r => r.success)
+      .reduce((sum, r) => sum + r.payments, 0);
+    const totalAmount = batchResults
+      .filter(r => r.success)
+      .reduce((sum, r) => sum + parseFloat(r.amount), 0);
+
+    let summaryMessage = `🎉 Proceso de lotes completado!\n`;
+
+    if (successfulBatches > 0) {
+      summaryMessage += `✅ ${successfulBatches} lotes exitosos (${totalSuccess} pagos)\n`;
+      summaryMessage += `💰 Total enviado: ${totalAmount.toFixed(3)} HIVE\n`;
+    }
+
+    if (failedBatches > 0) {
+      summaryMessage += `❌ ${failedBatches} lotes fallidos\n`;
+    }
+
+    if (canceledBatches > 0) {
+      summaryMessage += `⏹️ ${canceledBatches} lotes cancelados\n`;
+    }
+
+    if (canceledBatches > 0 || failedBatches > 0) {
+      summaryMessage += `ℹ️ Puedes usar "Continuar lotes" para reanudar`;
+    }
+
+    showNotification(
+      summaryMessage,
+      successfulBatches > 0 ? 'success' : canceledBatches > 0 ? 'info' : 'warning'
+    );
+  }
+
+  // 🆕 Función para continuar desde el último lote fallido
+  function continueFromLastBatch() {
+    const lastPendingBatch = paymentBatches.findIndex(
+      b => b.status === 'pending' || b.status === 'failed' || b.result?.canceled
+    );
+    if (lastPendingBatch !== -1) {
+      // Resetear lotes cancelados a pendientes antes de continuar
+      paymentBatches.forEach(batch => {
+        if (batch.result?.canceled) {
+          batch.status = 'pending';
+          batch.result = null;
+        }
+      });
+
+      executePaymentsByBatches(lastPendingBatch);
+    } else {
+      showNotification('No hay lotes pendientes para continuar', 'info');
+    }
+  }
+
+  // Función para actualizar la interfaz
+  function updatePaymentUI() {
+    const payments = window.currentPayments || [];
+    const paymentBatch = window.currentPaymentBatch || null;
+
+    if (payments.length === 0) {
+      const summary = document.getElementById('payment-summary');
+      if (summary) summary.classList.add('hidden');
+      return;
+    }
+
+    const summary = document.getElementById('payment-summary');
+    if (summary) summary.classList.remove('hidden');
+
+    const totalPayments = document.getElementById('total-payments');
+    if (totalPayments) totalPayments.textContent = payments.length.toString();
+
+    const totalAmount = document.getElementById('total-amount');
+    if (totalAmount) {
+      const total = payments.reduce((sum, payment) => sum + payment.amount, 0);
+      totalAmount.textContent = `${total.toFixed(3)} HIVE`;
+    }
+
+    const connectedUser = document.getElementById('connected-user');
+    if (connectedUser) connectedUser.textContent = currentUser || 'No conectado';
+
+    const hasUser = !!currentUser;
+    const executeAllBtn = document.getElementById('execute-all-payments');
+    if (executeAllBtn) executeAllBtn.disabled = !hasUser;
+
+    // 🆕 Actualizar estado de botones de lotes
+    const executeBatchBtn = document.getElementById('execute-batch-payments');
+    if (executeBatchBtn) executeBatchBtn.disabled = !hasUser;
+
+    const continueBatchBtn = document.getElementById('continue-batch-payments');
+    if (continueBatchBtn) {
+      const hasPendingBatches = paymentBatches.some(
+        b => b.status === 'pending' || b.status === 'failed' || b.result?.canceled
+      );
+      continueBatchBtn.disabled = !hasUser || !hasPendingBatches;
+    }
+
+    if (paymentBatch && paymentBatch.groups) {
+      const { high, medium, low } = paymentBatch.groups;
+
+      const highCount = document.getElementById('high-group-count');
+      if (highCount) highCount.textContent = high.count.toString();
+
+      const highAmount = document.getElementById('high-group-amount');
+      if (highAmount) highAmount.textContent = high.totalAmount + ' HIVE';
+
+      const mediumCount = document.getElementById('medium-group-count');
+      if (mediumCount) mediumCount.textContent = medium.count.toString();
+
+      const mediumAmount = document.getElementById('medium-group-amount');
+      if (mediumAmount) mediumAmount.textContent = medium.totalAmount + ' HIVE';
+
+      const lowCount = document.getElementById('low-group-count');
+      if (lowCount) lowCount.textContent = low.count.toString();
+
+      const lowAmount = document.getElementById('low-group-amount');
+      if (lowAmount) lowAmount.textContent = low.totalAmount + ' HIVE';
+
+      const executeHighBtn = document.getElementById('execute-high-payments');
+      if (executeHighBtn) executeHighBtn.disabled = !hasUser || high.count === 0;
+
+      const executeMediumBtn = document.getElementById('execute-medium-payments');
+      if (executeMediumBtn) executeMediumBtn.disabled = !hasUser || medium.count === 0;
+
+      const executeLowBtn = document.getElementById('execute-low-payments');
+      if (executeLowBtn) executeLowBtn.disabled = !hasUser || low.count === 0;
+    }
+  }
+
+  // Función para ejecutar pagos usando el servicio de múltiples transferencias
+  async function executePayments(paymentsToExecute, groupName = 'todos los pagos') {
+    if (!currentUser) {
+      showNotification('No hay usuario autenticado', 'error');
+      return;
+    }
+
+    if (!paymentsToExecute || paymentsToExecute.length === 0) {
+      showNotification('No hay pagos para ejecutar', 'warning');
+      return;
+    }
+
+    try {
+      showNotification(`Iniciando ${paymentsToExecute.length} pagos con Keychain...`, 'info');
+
+      // Construir operaciones para requestBroadcast
+      const operations = paymentsToExecute.map(payment => [
+        'transfer',
+        {
+          from: currentUser,
+          to: payment.to,
+          amount: `${payment.amount.toFixed(3)} HIVE`,
+          memo: payment.memo || 'Pago de curación - Aliento.pay',
+        },
+      ]);
+
+      // Debug: mostrar las operaciones que se van a enviar
+      console.log(
+        `💸 [PAYMENTS] Enviando ${operations.length} operaciones:`,
+        operations.slice(0, 3)
+      );
+
+      // Usar directamente requestBroadcast de Keychain
+      const result = await new Promise((resolve, reject) => {
+        if (!window.hive_keychain) {
+          reject(new Error('Hive Keychain no está disponible'));
+          return;
+        }
+
+        window.hive_keychain.requestBroadcast(currentUser, operations, 'active', response => {
+          if (response.success) {
+            resolve(response);
+          } else {
+            reject(new Error(response.message || response.error || 'Error desconocido'));
+          }
+        });
+      });
+
+      if (result.success) {
+        const totalAmount = paymentsToExecute.reduce((sum, p) => sum + p.amount, 0);
+
+        showNotification(
+          `¡Éxito! ${groupName} ejecutados correctamente.\n` +
+            `💰 Total: ${totalAmount.toFixed(3)} HIVE\n` +
+            `🔗 TX ID: ${result.result?.id}`,
+          'success'
+        );
+
+        // Marcar pagos como completados
+        paymentsToExecute.forEach(payment => {
+          payment.status = 'success';
+        });
+
+        updatePaymentUI();
+      }
+    } catch (error) {
+      console.log(`ℹ️ [PAYMENTS] Respuesta:`, error.message);
+
+      if (error && error.message && error.message.includes('Request was canceled by the user')) {
+        // Cancelación normal del usuario - no es un error
+        console.log(`👤 [PAYMENTS] Usuario canceló la operación`);
+        showNotification('Operación cancelada por el usuario', 'info');
+      } else {
+        // Error real
+        console.error(`❌ [PAYMENTS] Error real:`, error);
+        showNotification(`Error ejecutando ${groupName}: ${error.message}`, 'error');
+      }
+    }
+  }
+
+  // Función para alternar vista de grupos
+  function toggleGroupView() {
+    isGroupView = !isGroupView;
+    updatePaymentUI();
+  }
+
+  // Función global para ejecutar pagos de grupo
+  window.executeGroupPayments = function (groupId) {
+    const paymentBatch = window.currentPaymentBatch;
+    if (!paymentBatch) return;
+
+    const groupData = paymentBatch.groups[groupId];
+    if (!groupData || groupData.count === 0) return;
+
+    const groupNames = {
+      high: 'pagos de alto valor',
+      medium: 'pagos de valor medio',
+      low: 'pagos de bajo valor',
+    };
+
+    executePayments(groupData.payments, groupNames[groupId] || 'pagos del grupo');
+  };
+
+  // Función de inicialización principal
+  function initializePaymentSystem() {
+    console.log('🔄 Inicializando sistema de pagos...');
+
+    currentUser = localStorage.getItem('authenticated_user');
+
+    if (!currentUser) {
+      showNotification('No hay usuario autenticado. Redirigiendo...', 'warning');
+      setTimeout(() => (window.location.href = '/'), 2000);
+      return;
+    }
+
+    isGroupView = window.isGroupView || false;
+    updatePaymentUI();
+
+    if (isGroupView && window.currentPaymentBatch) {
+      toggleGroupView();
+    }
+
+    // Event listeners (remover listeners existentes primero)
+    setupEventListeners();
+
+    // Limpiar URL
+    cleanupURL();
+
+    console.log('✅ Sistema de pagos inicializado correctamente');
+  }
+
+  // Función para configurar event listeners
+  function setupEventListeners() {
+    // Remover listeners existentes para evitar duplicados
+    const executeAllBtn = document.getElementById('execute-all-payments');
+    if (executeAllBtn) {
+      executeAllBtn.replaceWith(executeAllBtn.cloneNode(true));
+      const newExecuteAllBtn = document.getElementById('execute-all-payments');
+      if (newExecuteAllBtn) {
+        newExecuteAllBtn.addEventListener('click', () => {
+          executePayments(window.currentPayments, 'todos los pagos');
+        });
+      }
+    }
+
+    // 🆕 Botón para pagos por lotes
+    const executeBatchBtn = document.getElementById('execute-batch-payments');
+    if (executeBatchBtn) {
+      executeBatchBtn.replaceWith(executeBatchBtn.cloneNode(true));
+      const newExecuteBatchBtn = document.getElementById('execute-batch-payments');
+      if (newExecuteBatchBtn) {
+        newExecuteBatchBtn.addEventListener('click', () => {
+          executePaymentsByBatches(0);
+        });
+      }
+    }
+
+    // 🆕 Botón para continuar lotes
+    const continueBatchBtn = document.getElementById('continue-batch-payments');
+    if (continueBatchBtn) {
+      continueBatchBtn.replaceWith(continueBatchBtn.cloneNode(true));
+      const newContinueBatchBtn = document.getElementById('continue-batch-payments');
+      if (newContinueBatchBtn) {
+        newContinueBatchBtn.addEventListener('click', continueFromLastBatch);
+      }
+    }
+
+    // 🆕 Botón para resetear lotes
+    const resetBatchBtn = document.getElementById('reset-batch-payments');
+    if (resetBatchBtn) {
+      resetBatchBtn.replaceWith(resetBatchBtn.cloneNode(true));
+      const newResetBatchBtn = document.getElementById('reset-batch-payments');
+      if (newResetBatchBtn) {
+        newResetBatchBtn.addEventListener('click', () => {
+          paymentBatches = [];
+          batchResults = [];
+          currentBatchIndex = 0;
+          batchPaymentInProgress = false;
+          updateBatchProgress();
+          showNotification('Lotes reseteados', 'info');
+        });
+      }
+    }
+
+    const toggleGroupBtn = document.getElementById('toggle-group-view');
+    if (toggleGroupBtn) {
+      toggleGroupBtn.replaceWith(toggleGroupBtn.cloneNode(true));
+      const newToggleGroupBtn = document.getElementById('toggle-group-view');
+      if (newToggleGroupBtn) {
+        newToggleGroupBtn.addEventListener('click', toggleGroupView);
+      }
+    }
+
+    const refreshBtn = document.getElementById('refresh-data');
+    if (refreshBtn) {
+      refreshBtn.replaceWith(refreshBtn.cloneNode(true));
+      const newRefreshBtn = document.getElementById('refresh-data');
+      if (newRefreshBtn) {
+        newRefreshBtn.addEventListener('click', () => window.location.reload());
+      }
+    }
+  }
+
+  // Función para limpiar la URL
+  function cleanupURL() {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('data')) {
+      const hasGroups = url.searchParams.has('groups');
+      url.searchParams.delete('data');
+      if (!hasGroups) url.searchParams.delete('groups');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }
+
+  // Función para detectar si la página está completamente cargada
+  function isPageReady() {
+    return document.readyState === 'complete' || document.readyState === 'interactive';
+  }
+
+  // Función para inicializar con retry
+  function initializeWithRetry(maxRetries = 3, delay = 100) {
+    let retries = 0;
+
+    function tryInitialize() {
+      if (document.getElementById('payment-summary')) {
+        initializePaymentSystem();
+        return;
+      }
+
+      if (retries < maxRetries) {
+        retries++;
+        console.log(`🔄 Reintentando inicialización (${retries}/${maxRetries})`);
+        setTimeout(tryInitialize, delay);
+      } else {
+        console.error('❌ No se pudo inicializar el sistema de pagos');
+      }
+    }
+
+    tryInitialize();
+  }
+
+  // Múltiples puntos de entrada para asegurar la inicialización
+
+  // 1. DOMContentLoaded - Para carga inicial
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 DOMContentLoaded event');
+    initializeWithRetry();
+  });
+
+  // 2. Load event - Para asegurar que todo esté cargado
+  window.addEventListener('load', () => {
+    console.log('🌐 Window load event');
+    initializeWithRetry();
+  });
+
+  // 3. Astro View Transitions - Para navegación SPA
+  document.addEventListener('astro:page-load', () => {
+    console.log('🚀 Astro page load event');
+    setupMutationObserver();
+    initializeWithRetry();
+  });
+
+  // 4. Astro antes de la navegación - Para limpiar estados anteriores
+  document.addEventListener('astro:before-preparation', () => {
+    console.log('🧹 Limpiando estado antes de navegación');
+    // Limpiar observador si existe
+    if (observer) {
+      observer.disconnect();
+    }
+  });
+
+  // 5. Observador de mutaciones para detectar cambios en el DOM
+  function setupMutationObserver() {
+    // Desconectar observador anterior si existe
+    if (observer) {
+      observer.disconnect();
+    }
+
+    observer = new MutationObserver(mutations => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          const paymentSummary = document.getElementById('payment-summary');
+          if (paymentSummary && !paymentSummary.dataset.initialized) {
+            console.log('🔍 Detectado componente payment-summary, inicializando...');
+            paymentSummary.dataset.initialized = 'true';
+            initializeWithRetry();
+            break;
+          }
+        }
+      }
+    });
+
+    // Iniciar observación
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
+  // 6. Evento personalizado de Aliento para transiciones
+  document.addEventListener('aliento:page-ready', () => {
+    console.log('🎯 Aliento: Página lista, inicializando sistema de pagos');
+    setupMutationObserver();
+    initializeWithRetry();
+  });
+
+  // 7. Configurar observador en cada carga
+  setupMutationObserver();
+
+  // 8. Inicialización inmediata si la página ya está lista
+  if (isPageReady()) {
+    console.log('⚡ Página ya lista, inicializando inmediatamente');
+    setTimeout(() => initializeWithRetry(), 50);
+  }
+</script>

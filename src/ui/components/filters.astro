@@ -1,0 +1,1518 @@
+<!-- Delegation Filters -->
+<div id="filters-container" class="bg-[#18181b] rounded-2xl border border-[#232329] p-6 mb-6">
+  <div class="flex items-center gap-2 mb-6">
+    <svg class="w-5 h-5 text-sky-600" fill="currentColor" viewBox="0 0 20 20">
+      <path
+        fill-rule="evenodd"
+        d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z"
+        clip-rule="evenodd"></path>
+    </svg>
+    <h2 class="text-xl font-bold text-white">Delegation Filters</h2>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <!-- Curation Period Selection -->
+    <div>
+      <h3 class="text-sm font-semibold text-gray-300 mb-3">
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z"
+              clip-rule="evenodd"></path>
+          </svg>
+          Curation Period
+        </div>
+      </h3>
+      <div class="space-y-2" data-filter-group="curation-period">
+        <button
+          id="curation-btn-24h"
+          class="curation-period-btn w-full rounded-lg p-3 text-left transition-all duration-200"
+          data-filter-type="curation-period"
+          data-filter-value="24h"
+          data-filter-state="inactive"
+          data-period="24h"
+          data-value="0"
+        >
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-medium text-blue-300">24 Hours</span>
+            <div class="w-3 h-3 rounded-full border-2 border-gray-500 curation-radio"></div>
+          </div>
+          <div class="text-lg font-bold text-white mb-1 curation-value">0.0000 HP</div>
+        </button>
+
+        <button
+          id="curation-btn-7d"
+          class="curation-period-btn w-full rounded-lg p-3 text-left transition-all duration-200"
+          data-filter-type="curation-period"
+          data-filter-value="7d"
+          data-filter-state="inactive"
+          data-period="7d"
+          data-value="0"
+        >
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-medium text-emerald-300">7 Days</span>
+            <div class="w-3 h-3 rounded-full border-2 border-gray-500 curation-radio"></div>
+          </div>
+          <div class="text-lg font-bold text-white mb-1 curation-value">0.0000 HP</div>
+        </button>
+
+        <button
+          id="curation-btn-30d"
+          class="curation-period-btn w-full rounded-lg p-3 text-left transition-all duration-200"
+          data-filter-type="curation-period"
+          data-filter-value="30d"
+          data-filter-state="inactive"
+          data-period="30d"
+          data-value="0"
+        >
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-sm font-medium text-white">30 Days</span>
+            <div class="w-3 h-3 rounded-full border-2 border-gray-500 curation-radio"></div>
+          </div>
+          <div class="text-lg font-bold text-white mb-1 curation-value">0.0000 HP</div>
+        </button>
+      </div>
+      <div class="mt-3 p-2 bg-[#0f172a] border border-amber-800/30 rounded-lg">
+        <div class="text-xs text-amber-200">
+          <div class="font-medium mb-1">Payment calculation:</div>
+          <div class="text-amber-300/80">Period used for dynamic payment percentages.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time Period -->
+    <div>
+      <h3 class="text-sm font-semibold text-gray-300 mb-3">Time Period (Days)</h3>
+      <div class="grid grid-cols-3 gap-2" data-filter-group="time-period">
+        <button
+          id="time-period-btn-1"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="time-period"
+          data-filter-value="1"
+          data-filter-state="inactive"
+          data-value="1"
+        >
+          1 day
+        </button>
+        <button
+          id="time-period-btn-3"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="time-period"
+          data-filter-value="3"
+          data-filter-state="inactive"
+          data-value="3"
+        >
+          3 days
+        </button>
+        <button
+          id="time-period-btn-7"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="time-period"
+          data-filter-value="7"
+          data-filter-state="inactive"
+          data-value="7"
+        >
+          7 days
+        </button>
+        <button
+          id="time-period-btn-14"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="time-period"
+          data-filter-value="14"
+          data-filter-state="inactive"
+          data-value="14"
+        >
+          14 days
+        </button>
+        <button
+          id="time-period-btn-21"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="time-period"
+          data-filter-value="21"
+          data-filter-state="inactive"
+          data-value="21"
+        >
+          21 days
+        </button>
+        <button
+          id="time-period-btn-30"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="time-period"
+          data-filter-value="30"
+          data-filter-state="active"
+          data-value="30"
+        >
+          30 days
+        </button>
+      </div>
+    </div>
+
+    <script>
+      // Declaraciones globales para TypeScript
+      declare global {
+        interface Window {
+          filterState: any;
+          getCurationStatsData?: () => any;
+          removeExcludedUser?: (username: string) => void;
+        }
+      }
+      // ✅ Sistema robusto para navegación SPA/View Transitions
+      (function () {
+        'use strict';
+
+        // Tipos definidos inline para evitar problemas de importación en .astro
+        interface FilterState {
+          timePeriod: number;
+          minimumHP: number;
+          excludedUsers: string[];
+          applied: boolean;
+          curationPeriod: string;
+          curationValue: number;
+        }
+
+        interface CurationStatsData {
+          curation24h: number;
+          curation7d: number;
+          curation30d: number;
+        }
+
+        interface FilterConfiguration extends FilterState {
+          timestamp: string;
+          version: string;
+        }
+
+        // Estado global de los filtros que persiste en navegación
+        if (!window.filterState) {
+          window.filterState = {
+            timePeriod: 30,
+            minimumHP: 50,
+            excludedUsers: [],
+            applied: false,
+            curationPeriod: '30d',
+            curationValue: 0,
+          } as FilterState;
+        }
+
+        // Estado de inicialización que se resetea en cada navegación
+        let filtersInitialized = false;
+        let initializationPromise: Promise<void> | null = null;
+
+        // ✅ REFACTORIZADO: Función robusta basada en data attributes
+        function setActiveButton(filterType: string, value: string | number): void {
+          console.log(`🔄 Estableciendo botón activo: ${filterType} = ${value}`);
+
+          // Resetear todos los botones del tipo
+          const buttons = document.querySelectorAll(`[data-filter-type="${filterType}"]`);
+          buttons.forEach(btn => {
+            const button = btn as HTMLElement & { dataset: { filterState: string } };
+            button.dataset.filterState = 'inactive';
+
+            // Para botones de curación, actualizar estado visual
+            if (filterType === 'curation-period') {
+              button.classList.remove('bg-green-500', 'bg-blue-500');
+              button.classList.add('bg-gray-700');
+
+              // Actualizar radio button
+              const radio = button.querySelector('.curation-radio');
+              if (radio) {
+                radio.classList.remove('bg-white', 'bg-blue-400');
+                radio.classList.add('border-2', 'border-gray-500');
+              }
+            }
+          });
+
+          // Activar el botón seleccionado
+          const activeButton = document.querySelector(
+            `[data-filter-type="${filterType}"][data-filter-value="${value}"]`
+          ) as (HTMLElement & { dataset: { filterState: string } }) | null;
+
+          if (activeButton) {
+            activeButton.dataset.filterState = 'active';
+            console.log(`✅ Botón activado: ${activeButton.id}`);
+
+            // Para botones de curación, actualizar estado visual
+            if (filterType === 'curation-period') {
+              activeButton.classList.remove('bg-gray-700');
+
+              // Colores específicos por período
+              if (value === '24h') {
+                activeButton.classList.add('bg-green-500');
+              } else if (value === '7d') {
+                activeButton.classList.add('bg-blue-500');
+              } else if (value === '30d') {
+                activeButton.classList.add('bg-gray-600');
+              }
+
+              // Actualizar radio button
+              const radio = activeButton.querySelector('.curation-radio');
+              if (radio) {
+                radio.classList.remove('border-2', 'border-gray-500');
+                radio.classList.add('bg-white');
+              }
+            }
+          } else {
+            console.warn(`⚠️ No se encontró botón para ${filterType} = ${value}`);
+          }
+        }
+
+        // Función para agregar usuario excluido
+        function addExcludedUser(username: string): void {
+          if (!username || window.filterState.excludedUsers.includes(username)) return;
+
+          window.filterState.excludedUsers.push(username);
+          renderExcludedUsers();
+        }
+
+        // Función para remover usuario excluido
+        function removeExcludedUser(username: string): void {
+          const index = window.filterState.excludedUsers.indexOf(username);
+          if (index > -1) {
+            window.filterState.excludedUsers.splice(index, 1);
+            renderExcludedUsers();
+          }
+        }
+
+        // ✅ FUNCIÓN PARA INICIALIZAR PERÍODO ACTIVO POR DEFECTO
+        function initializeDefaultCurationPeriod(): void {
+          console.log('🔄 Inicializando período de curación por defecto...');
+
+          // Si no hay configuración guardada, usar 30d por defecto
+          if (!window.filterState.curationPeriod || window.filterState.curationPeriod === '30d') {
+            console.log('📋 Estableciendo período por defecto: 30d');
+            window.filterState.curationPeriod = '30d';
+            setActiveButton('curation-period', '30d');
+
+            // Asegurarse de que el valor se actualice cuando estén disponibles los datos
+            setTimeout(() => {
+              const btn30d = document.getElementById('curation-btn-30d') as HTMLElement | null;
+              if (btn30d && btn30d.dataset.value) {
+                const value = parseFloat(btn30d.dataset.value);
+                window.filterState.curationValue = value;
+                console.log(`✅ Valor inicial establecido: ${value} HP para 30d`);
+              }
+            }, 100);
+          } else {
+            console.log(`📋 Usando período guardado: ${window.filterState.curationPeriod}`);
+            setActiveButton('curation-period', window.filterState.curationPeriod);
+          }
+        }
+        function selectCurationPeriod(period: string, value: number): void {
+          // Actualizar estado
+          window.filterState.curationPeriod = period;
+          window.filterState.curationValue = value;
+
+          // Usar función robusta para cambiar estados
+          setActiveButton('curation-period', period);
+
+          // 🔄 ASEGURAR QUE EL VALOR SE ACTUALIZA CORRECTAMENTE
+          const activeBtn = document.querySelector(
+            `[data-filter-type="curation-period"][data-filter-value="${period}"]`
+          ) as (HTMLElement & { dataset: { value: string } }) | null;
+
+          if (activeBtn && activeBtn.dataset.value !== '0') {
+            // Si el botón tiene un valor real, usarlo
+            const realValue = parseFloat(activeBtn.dataset.value || '0');
+            window.filterState.curationValue = realValue;
+            console.log('🎯 Período de curación seleccionado:', { period, value: realValue });
+          } else {
+            console.log('🎯 Período de curación seleccionado:', { period, value });
+          }
+        }
+
+        // ✅ FUNCIÓN PARA MOSTRAR ESTADO DE CARGA
+        function showLoadingIndicator(): void {
+          const buttonIds = ['curation-btn-24h', 'curation-btn-7d', 'curation-btn-30d'];
+          buttonIds.forEach(buttonId => {
+            const btn = document.getElementById(buttonId);
+            if (btn) {
+              const valueElement = btn.querySelector('.curation-value');
+              if (valueElement) {
+                valueElement.innerHTML = `
+                  <span class="flex items-center gap-2">
+                    <svg class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="text-sm">Cargando...</span>
+                  </span>
+                `;
+              }
+            }
+          });
+        }
+
+        // ✅ FUNCIÓN MEJORADA: Esperar hasta que los datos de curación estén disponibles
+        async function waitForCurationData(
+          maxWaitTime = 20000,
+          checkInterval = 1000
+        ): Promise<any> {
+          // Mostrar indicador de carga
+          showLoadingIndicator();
+
+          return new Promise((resolve, reject) => {
+            const startTime = Date.now();
+            let lastDataCheck = null;
+
+            const checkData = async () => {
+              const elapsedTime = Date.now() - startTime;
+
+              if (elapsedTime >= maxWaitTime) {
+                console.warn('⏰ Timeout esperando datos de curación, intentando API directa');
+
+                // Último intento: llamar API directamente
+                try {
+                  const response = await fetch('/api/curation-stats');
+                  if (response.ok) {
+                    const apiData = await response.json();
+                    console.log('✅ Datos obtenidos directamente de API:', apiData);
+                    resolve(apiData);
+                    return;
+                  }
+                } catch (error) {
+                  console.error('❌ Error en API directa:', error);
+                }
+
+                // Fallback final
+                resolve({
+                  curation24h: 0,
+                  curation7d: 0,
+                  curation30d: 0,
+                  source: 'timeout',
+                });
+                return;
+              }
+
+              // Verificar si la función está disponible
+              if (typeof window.getCurationStatsData === 'function') {
+                const data = window.getCurationStatsData();
+
+                // Log más detallado para debug
+                console.log(`🔍 Verificando datos (${Math.round(elapsedTime / 1000)}s):`, {
+                  data: data,
+                  hasFunction: typeof window.getCurationStatsData === 'function',
+                  authenticated: data.authenticated,
+                  source: data.source,
+                  hasRealData: data.curation24h > 0 || data.curation7d > 0 || data.curation30d > 0,
+                });
+
+                // Verificar si los datos cambiaron desde la última verificación
+                const dataString = JSON.stringify(data);
+                const dataChanged = lastDataCheck !== dataString;
+                lastDataCheck = dataString;
+
+                // Condiciones para considerar datos válidos:
+                // 1. Hay datos reales (no todos 0)
+                // 2. Fuente válida y autenticado
+                // 3. Datos del servidor (incluso si son 0)
+                // 4. Los datos cambiaron (indica que se cargaron)
+
+                const hasRealData =
+                  data.curation24h > 0 || data.curation7d > 0 || data.curation30d > 0;
+                const isFromValidSource = data.source && data.source !== 'auth_error';
+                const isServerData = data.source === 'server' && data.authenticated;
+                const isFromCache = data.source === 'cache' && data.authenticated;
+
+                if (
+                  hasRealData ||
+                  isServerData ||
+                  isFromCache ||
+                  (isFromValidSource && dataChanged)
+                ) {
+                  console.log('✅ Datos de curación disponibles:', data);
+                  resolve(data);
+                  return;
+                }
+
+                // Si llevamos más de 10 segundos y tenemos datos válidos (aunque sean 0)
+                if (elapsedTime > 10000 && data.authenticated && data.source) {
+                  console.log('✅ Datos válidos después de 10s (pueden ser 0):', data);
+                  resolve(data);
+                  return;
+                }
+              } else {
+                console.log('⚠️ Función getCurationStatsData no disponible aún');
+
+                // Si no hay función después de 5 segundos, intentar API directa
+                if (elapsedTime > 5000) {
+                  console.log('🔄 Intentando API directa por falta de función...');
+                  try {
+                    const response = await fetch('/api/curation-stats');
+                    if (response.ok) {
+                      const apiData = await response.json();
+                      console.log('✅ Datos obtenidos directamente de API:', apiData);
+                      resolve(apiData);
+                      return;
+                    }
+                  } catch (error) {
+                    console.error('❌ Error en API directa:', error);
+                  }
+                }
+              }
+
+              // Continuar verificando
+              setTimeout(checkData, checkInterval);
+            };
+
+            checkData();
+          });
+        }
+
+        // ✅ FUNCIÓN DE RESPALDO: Cargar datos directamente de la API
+        async function loadCurationDataFromAPI(): Promise<any> {
+          console.log('📡 Cargando datos directamente de la API...');
+
+          try {
+            const response = await fetch('/api/curation-stats');
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('✅ Datos cargados desde API:', data);
+            return data;
+          } catch (error) {
+            console.error('❌ Error cargando desde API:', error);
+            throw error;
+          }
+        }
+
+        // ✅ REFACTORIZADO: Función robusta para cargar datos de curación
+        async function loadCurationData(): Promise<void> {
+          console.log('🔍 Filters: Intentando cargar datos de curación...');
+
+          try {
+            // Esperar hasta que los datos estén disponibles
+            const curationData = await waitForCurationData();
+
+            console.log('📊 Filters: Datos de curación obtenidos:', curationData);
+
+            // Actualizar valores en los botones usando IDs específicos
+            const buttonIds = ['curation-btn-24h', 'curation-btn-7d', 'curation-btn-30d'];
+            buttonIds.forEach(buttonId => {
+              const btn = document.getElementById(buttonId) as
+                | (HTMLElement & {
+                    dataset: { period: string; value: string };
+                  })
+                | null;
+              if (!btn) {
+                console.warn(`⚠️ Filters: Botón ${buttonId} no encontrado`);
+                return;
+              }
+
+              const period = btn.dataset.period;
+              const valueElement = btn.querySelector('.curation-value');
+
+              if (valueElement) {
+                let value = 0;
+                switch (period) {
+                  case '24h':
+                    value = curationData.curation24h || 0;
+                    break;
+                  case '7d':
+                    value = curationData.curation7d || 0;
+                    break;
+                  case '30d':
+                    value = curationData.curation30d || 0;
+                    break;
+                }
+
+                btn.dataset.value = value.toString();
+                valueElement.textContent = `${value.toFixed(4)} HP`;
+                console.log(`✅ Filters: Actualizado ${buttonId} con valor ${value.toFixed(4)} HP`);
+              } else {
+                console.warn(`⚠️ Filters: Elemento .curation-value no encontrado en ${buttonId}`);
+              }
+            });
+
+            // 🔄 ESTABLECER VALOR INICIAL PARA EL PERÍODO ACTIVO DESPUÉS DE ACTUALIZAR LOS DATOS
+            // Primero, verificar si hay un período específico configurado
+            let targetPeriod = window.filterState.curationPeriod;
+
+            // Si no hay período configurado o es el por defecto, usar 30d
+            if (!targetPeriod || targetPeriod === '30d') {
+              targetPeriod = '30d';
+              console.log('📋 Usando período por defecto: 30d');
+            }
+
+            // Buscar el botón para el período objetivo
+            const targetBtn = document.querySelector(
+              `[data-filter-type="curation-period"][data-filter-value="${targetPeriod}"]`
+            ) as (HTMLElement & { dataset: { value: string; period: string } }) | null;
+
+            if (targetBtn) {
+              // Asegurarse de que esté activo
+              setActiveButton('curation-period', targetPeriod);
+
+              const newValue = parseFloat(targetBtn.dataset.value || '0');
+              const period = targetBtn.dataset.period || targetPeriod;
+
+              // Actualizar el estado global
+              window.filterState.curationValue = newValue;
+              window.filterState.curationPeriod = period;
+
+              console.log(
+                `✅ Filters: Valor activo establecido: ${window.filterState.curationValue} HP para período ${period}`
+              );
+
+              // 🔄 FORZAR ACTUALIZACIÓN DEL ESTADO VISUAL
+              selectCurationPeriod(period, newValue);
+            } else {
+              console.warn(`⚠️ Filters: No se encontró botón para período ${targetPeriod}`);
+              // Fallback al primer botón activo encontrado
+              const anyActiveBtn = document.querySelector(
+                '[data-filter-type="curation-period"][data-filter-state="active"]'
+              ) as (HTMLElement & { dataset: { value: string; period: string } }) | null;
+
+              if (anyActiveBtn) {
+                const newValue = parseFloat(anyActiveBtn.dataset.value || '0');
+                const period = anyActiveBtn.dataset.period;
+                window.filterState.curationValue = newValue;
+                window.filterState.curationPeriod = period;
+                console.log(`✅ Fallback: Usando período activo ${period} con valor ${newValue}`);
+              }
+            }
+
+            // 🔄 EMITIR EVENTO DE ACTUALIZACIÓN
+            const event = new CustomEvent('curation-data-loaded', {
+              detail: curationData,
+            });
+            document.dispatchEvent(event);
+          } catch (error) {
+            console.error('❌ Error cargando datos de curación:', error);
+            // Mostrar datos por defecto en caso de error
+            const buttonIds = ['curation-btn-24h', 'curation-btn-7d', 'curation-btn-30d'];
+            buttonIds.forEach(buttonId => {
+              const btn = document.getElementById(buttonId);
+              if (btn) {
+                btn.dataset.value = '0';
+                const valueElement = btn.querySelector('.curation-value');
+                if (valueElement) {
+                  valueElement.textContent = '0.0000 HP';
+                }
+              }
+            });
+          }
+        }
+
+        // ✅ FUNCIÓN MEJORADA: Cargar datos con retry usando múltiples fuentes
+        async function loadCurationDataWithRetry(
+          maxRetries: number = 3,
+          delay: number = 1000
+        ): Promise<void> {
+          let retries = 0;
+
+          const tryLoad = async () => {
+            console.log(
+              `🔄 Filters: Intento ${retries + 1}/${maxRetries} de cargar datos de curación`
+            );
+
+            try {
+              // Primero intentar con la función del dashboard
+              await loadCurationData();
+
+              // Verificar si los datos se cargaron correctamente
+              const activeBtn = document.querySelector(
+                '[data-filter-state="active"]'
+              ) as HTMLElement;
+              if (activeBtn && activeBtn.dataset.value && parseFloat(activeBtn.dataset.value) > 0) {
+                console.log('✅ Datos de curación cargados exitosamente');
+                return;
+              }
+
+              // Si no hay datos reales, intentar API directa
+              console.log('⚠️ No hay datos reales, intentando API directa...');
+              const apiData = await loadCurationDataFromAPI();
+
+              if (apiData) {
+                // Actualizar botones manualmente con datos de API
+                const buttonIds = ['curation-btn-24h', 'curation-btn-7d', 'curation-btn-30d'];
+                buttonIds.forEach(buttonId => {
+                  const btn = document.getElementById(buttonId) as HTMLElement;
+                  if (btn) {
+                    const period = btn.dataset.period;
+                    const valueElement = btn.querySelector('.curation-value');
+
+                    if (valueElement) {
+                      let value = 0;
+                      switch (period) {
+                        case '24h':
+                          value = apiData.curation24h || 0;
+                          break;
+                        case '7d':
+                          value = apiData.curation7d || 0;
+                          break;
+                        case '30d':
+                          value = apiData.curation30d || 0;
+                          break;
+                      }
+
+                      btn.dataset.value = value.toString();
+                      valueElement.textContent = `${value.toFixed(4)} HP`;
+                      console.log(`✅ API: ${buttonId} actualizado: ${value.toFixed(4)} HP`);
+                    }
+                  }
+                });
+
+                // Actualizar estado global
+                if (window.filterState) {
+                  const activeBtn = document.querySelector(
+                    '[data-filter-state="active"]'
+                  ) as HTMLElement;
+                  if (activeBtn) {
+                    const period = activeBtn.dataset.period;
+                    const value = parseFloat(activeBtn.dataset.value || '0');
+
+                    window.filterState.curationPeriod = period;
+                    window.filterState.curationValue = value;
+
+                    console.log(`✅ Estado global actualizado desde API: ${period} = ${value} HP`);
+                  }
+                }
+              }
+
+              console.log('✅ Datos de curación cargados exitosamente');
+            } catch (error) {
+              console.error(`❌ Error en intento ${retries + 1}:`, error);
+
+              retries++;
+              if (retries < maxRetries) {
+                console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`);
+                setTimeout(tryLoad, delay);
+              } else {
+                console.error(
+                  '❌ No se pudo cargar datos de curación después de múltiples intentos'
+                );
+                // Mostrar indicador de error y datos por defecto
+                const buttonIds = ['curation-btn-24h', 'curation-btn-7d', 'curation-btn-30d'];
+                buttonIds.forEach(buttonId => {
+                  const btn = document.getElementById(buttonId);
+                  if (btn) {
+                    btn.dataset.value = '0';
+                    const valueElement = btn.querySelector('.curation-value');
+                    if (valueElement) {
+                      valueElement.innerHTML = `
+                        <span class="text-red-400 flex items-center gap-1">
+                          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                          </svg>
+                          Error
+                        </span>
+                      `;
+                    }
+                  }
+                });
+              }
+            }
+          };
+
+          await tryLoad();
+        }
+
+        // Función para renderizar la lista de usuarios excluidos
+        function renderExcludedUsers(): void {
+          const container = document.getElementById('excluded-users-list');
+          if (!container) return;
+
+          container.innerHTML = '';
+
+          window.filterState.excludedUsers.forEach((username: string) => {
+            const userTag = document.createElement('div');
+            userTag.className =
+              'flex items-center justify-between bg-[#232329] border border-[#2a2a32] rounded-lg px-3 py-2';
+            userTag.innerHTML = `
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+          </svg>
+          <span class="text-white text-sm">@${username}</span>
+        </div>
+        <button 
+          onclick="removeExcludedUser('${username}')"
+          class="text-red-400 hover:text-red-300 transition-colors"
+          title="Remover usuario"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+        </button>
+      `;
+            container.appendChild(userTag);
+          });
+        }
+
+        // Función para bloquear/desbloquear filtros
+        function toggleFiltersLock(lock: boolean): void {
+          const filterButtons = document.querySelectorAll('.filter-btn');
+          const inputs = document.querySelectorAll('input');
+          const curationButtons = document.querySelectorAll('.curation-period-btn');
+
+          // Bloquear/desbloquear botones de filtro normales
+          filterButtons.forEach(btn => {
+            const button = btn as HTMLButtonElement;
+            button.disabled = lock;
+            if (lock) {
+              btn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+              btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+          });
+
+          // Bloquear/desbloquear inputs
+          inputs.forEach(input => {
+            const inputElement = input as HTMLInputElement;
+            inputElement.disabled = lock;
+            if (lock) {
+              input.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+              input.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+          });
+
+          // Bloquear/desbloquear botones de período de curación
+          curationButtons.forEach(btn => {
+            const button = btn as HTMLButtonElement;
+            button.disabled = lock;
+            if (lock) {
+              btn.classList.add('opacity-50', 'cursor-not-allowed');
+              // Remover hover effects cuando está bloqueado
+              btn.classList.remove('hover:bg-[#2a2a32]', 'hover:bg-emerald-700');
+            } else {
+              btn.classList.remove('opacity-50', 'cursor-not-allowed');
+              // Restaurar hover effects
+              if (btn.classList.contains('selected')) {
+                btn.classList.add('hover:bg-emerald-700');
+              } else {
+                btn.classList.add('hover:bg-[#2a2a32]');
+              }
+            }
+          });
+        }
+
+        // Función para aplicar/editar filtros
+        function applyFilters(): void {
+          console.log('🔄 applyFilters() ejecutándose...');
+          console.log('📊 Estado actual del filtro:', window.filterState);
+
+          const button = document.getElementById('apply-filters-btn') as HTMLButtonElement | null;
+          const nextButton = document.getElementById('next-btn') as HTMLButtonElement | null;
+
+          console.log('🔍 Elementos encontrados:', {
+            button: !!button,
+            nextButton: !!nextButton,
+            applied: window.filterState?.applied,
+          });
+
+          if (!window.filterState?.applied) {
+            console.log('✅ Aplicando filtros...');
+
+            // Aplicar filtros
+
+            // Bloquear controles
+            toggleFiltersLock(true);
+            window.filterState.applied = true;
+
+            // Guardar configuración en localStorage para persistencia
+            saveFilterConfiguration();
+
+            // Cambiar botón a "Edit Filters"
+            if (button) {
+              button.innerHTML = `
+               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                 <path fill-rule="evenodd" d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" clip-rule="evenodd"></path>
+               </svg>
+               Edit Filters
+             `;
+            }
+
+            // Mostrar botón Next
+            if (nextButton) {
+              console.log('👁️ Mostrando botón Next...');
+              nextButton.classList.remove('hidden');
+              nextButton.style.display = 'block';
+            } else {
+              console.error('❌ No se encontró el botón Next');
+            }
+
+            // Emitir evento
+            const event = new CustomEvent('filtersApplied', {
+              detail: window.filterState,
+            });
+            document.dispatchEvent(event);
+
+            console.log('✅ Filtros aplicados exitosamente');
+          } else {
+            console.log('🔄 Editando filtros...');
+            // Editar filtros
+            console.log('Editing filters');
+
+            // Desbloquear controles
+            toggleFiltersLock(false);
+            window.filterState.applied = false;
+
+            // Cambiar botón de vuelta a "Apply Filters"
+            if (button) {
+              button.innerHTML = `
+               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+               </svg>
+               Apply Filters
+             `;
+            }
+
+            // Ocultar botón Next
+            if (nextButton) {
+              nextButton.classList.add('hidden');
+              nextButton.style.display = 'none';
+            }
+          }
+        }
+
+        // Función para el botón Next
+        async function nextStep(): Promise<void> {
+          console.log(
+            'Going to next step with filters (including curation period):',
+            window.filterState
+          );
+
+          // 1. Mostrar estado de carga inmediatamente
+          const nextButton = document.getElementById('next-btn') as HTMLButtonElement | null;
+          if (nextButton) {
+            nextButton.disabled = true;
+            nextButton.innerHTML = `
+            <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading...
+          `;
+          }
+
+          // 2. OPTIMIZACIÓN: Obtener datos de curación del Dashboard/caché antes de navegar
+          try {
+            // Verificar si tenemos datos de curación disponibles
+            if (typeof window.getCurationStatsData === 'function') {
+              const curationData = window.getCurationStatsData();
+              console.log('📊 Datos de curación obtenidos del Dashboard:', curationData);
+
+              // Asegurarnos de que curationValue esté actualizado
+              if (!window.filterState.curationValue || window.filterState.curationValue === 0) {
+                switch (window.filterState.curationPeriod) {
+                  case '24h':
+                    window.filterState.curationValue = curationData.curation24h;
+                    break;
+                  case '7d':
+                    window.filterState.curationValue = curationData.curation7d;
+                    break;
+                  case '30d':
+                  default:
+                    window.filterState.curationValue = curationData.curation30d;
+                    break;
+                }
+                console.log(
+                  '✅ curationValue actualizado desde Dashboard:',
+                  window.filterState.curationValue
+                );
+              }
+            } else {
+              console.warn('⚠️ No hay datos de curación disponibles del Dashboard');
+            }
+          } catch (error) {
+            console.warn('⚠️ Error obteniendo datos de curación del Dashboard:', error);
+          }
+
+          // 3. Guardar datos rápidamente
+          try {
+            // Importar las funciones de validación
+            const { saveFiltersToSessionStorage, encodeFiltersForUrl } = await import(
+              '../../lib/filter-validation.js'
+            );
+
+            // Guardar en sessionStorage
+            saveFiltersToSessionStorage(window.filterState);
+
+            // También mantener en localStorage como backup
+            localStorage.setItem('applied_filters', JSON.stringify(window.filterState));
+
+            console.log('📦 Filtros guardados en sessionStorage:', window.filterState);
+
+            // 4. Marcar que estamos en proceso de navegar
+            sessionStorage.setItem('calculate_loading', 'true');
+            sessionStorage.setItem('calculate_source', 'dashboard');
+
+            // 5. Emitir evento antes de navegar
+            const event = new CustomEvent('nextStep', {
+              detail: window.filterState,
+            });
+            document.dispatchEvent(event);
+
+            // 6. Navegar INMEDIATAMENTE sin cálculos pesados en servidor
+            // Solo pasamos los filtros para que se procesen en el cliente
+            const filtersEncoded = encodeFiltersForUrl(window.filterState);
+
+            // Usar requestIdleCallback para navegar en el próximo frame disponible
+            if (window.requestIdleCallback) {
+              window.requestIdleCallback(() => {
+                window.location.href = `/calculate?filters=${filtersEncoded}&source=dashboard`;
+              });
+            } else {
+              // Fallback para navegadores que no soportan requestIdleCallback
+              setTimeout(() => {
+                window.location.href = `/calculate?filters=${filtersEncoded}&source=dashboard`;
+              }, 0);
+            }
+          } catch (error) {
+            console.error('❌ Error guardando filtros:', error);
+            // Restaurar botón en caso de error
+            if (nextButton) {
+              nextButton.disabled = false;
+              nextButton.innerHTML = `
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+              </svg>
+              Next
+            `;
+            }
+
+            // Fallback al método anterior
+            sessionStorage.setItem('applied_filters', JSON.stringify(window.filterState));
+            sessionStorage.setItem('calculate_loading', 'true');
+            const filtersEncoded = encodeURIComponent(JSON.stringify(window.filterState));
+            window.location.href = `/calculate?filters=${filtersEncoded}&source=dashboard`;
+          }
+        }
+
+        // ✅ Sistema de inicialización robusto para navegación SPA
+        async function initializeFilters() {
+          if (filtersInitialized) {
+            console.log('⚠️ Filters ya inicializados, saltando...');
+            return;
+          }
+
+          if (initializationPromise) {
+            console.log('⏳ Esperando inicialización en progreso...');
+            return initializationPromise;
+          }
+
+          console.log('🔧 Inicializando filters component...');
+
+          initializationPromise = (async () => {
+            try {
+              await setupEventListeners();
+              // 🔄 CARGAR CONFIGURACIÓN PRIMERO
+              await loadFilterConfiguration();
+
+              // 🔄 INICIALIZAR PERÍODO POR DEFECTO
+              initializeDefaultCurationPeriod();
+
+              // 🔄 INICIAR CARGA DE DATOS DE CURACIÓN (esperar a que se completen)
+              console.log('📊 Iniciando carga de datos de curación...');
+              await loadCurationDataWithRetry();
+
+              // 🔄 VERIFICAR QUE LOS DATOS SE APLICARON CORRECTAMENTE
+              setTimeout(async () => {
+                const activeBtn = document.querySelector(
+                  '[data-filter-type="curation-period"][data-filter-state="active"]'
+                ) as (HTMLElement & { dataset: { value: string } }) | null;
+                if (activeBtn) {
+                  const currentValue = parseFloat(activeBtn.dataset.value || '0');
+                  console.log(`🔍 Verificación final: valor activo = ${currentValue}`);
+
+                  if (currentValue === 0) {
+                    console.log('⚠️ Valor aún es 0, intentando una carga adicional...');
+                    await loadCurationDataWithRetry(2, 2000);
+                  }
+                }
+              }, 2000);
+
+              filtersInitialized = true;
+              console.log('✅ Filters inicializados correctamente');
+            } catch (error) {
+              console.error('❌ Error inicializando filters:', error);
+            } finally {
+              initializationPromise = null;
+            }
+          })();
+          return initializationPromise;
+        } // Función separada para configurar event listeners
+        async function setupEventListeners() {
+          // Manejar clicks en botones de filtro
+          document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener(
+              'click',
+              function (this: HTMLElement & { dataset: { value: string } }) {
+                const groupElement = this.closest('[data-filter-group]') as HTMLElement & {
+                  dataset: { filterGroup: string };
+                };
+                const group = groupElement?.dataset.filterGroup;
+                const value = parseInt(this.dataset.value);
+
+                if (group === 'time-period') {
+                  window.filterState.timePeriod = value;
+                  setActiveButton('time-period', value);
+                } else if (group === 'minimum-hp') {
+                  window.filterState.minimumHP = value;
+                  setActiveButton('minimum-hp', value);
+
+                  // Sincronizar con el input
+                  const customInput = document.getElementById(
+                    'custom-hp-input'
+                  ) as HTMLInputElement | null;
+                  if (customInput) customInput.value = value.toString();
+                }
+              }
+            );
+          });
+
+          // Manejar cambios en el input de HP personalizado
+          const customHPInput = document.getElementById(
+            'custom-hp-input'
+          ) as HTMLInputElement | null;
+          if (customHPInput) {
+            customHPInput.addEventListener('input', function (this: HTMLInputElement) {
+              const value = parseInt(this.value) || 50;
+              window.filterState.minimumHP = value;
+
+              // Desactivar todos los botones si es un valor personalizado
+              const predefinedValues = [50, 100, 500, 1000];
+              if (predefinedValues.includes(value)) {
+                setActiveButton('minimum-hp', value);
+              } else {
+                // Desactivar todos los botones para valores personalizados
+                const buttons = document.querySelectorAll(
+                  '[data-filter-group="minimum-hp"] .filter-btn'
+                );
+                buttons.forEach(btn => {
+                  btn.classList.remove(
+                    'active',
+                    'bg-sky-600',
+                    'hover:bg-sky-700',
+                    'text-white',
+                    'font-semibold'
+                  );
+                  btn.classList.add(
+                    'bg-[#232329]',
+                    'hover:bg-[#2a2a32]',
+                    'text-gray-300',
+                    'border',
+                    'border-[#232329]'
+                  );
+                });
+              }
+            });
+          }
+
+          // Manejar input de usuarios excluidos
+          const excludedInput = document.getElementById(
+            'excluded-username-input'
+          ) as HTMLInputElement | null;
+          if (excludedInput) {
+            excludedInput.addEventListener(
+              'keypress',
+              function (this: HTMLInputElement, e: KeyboardEvent) {
+                if (e.key === 'Enter') {
+                  const username = this.value.trim().replace('@', '');
+                  if (username) {
+                    addExcludedUser(username);
+                    this.value = '';
+                  }
+                }
+              }
+            );
+          }
+
+          // Manejar botón de aplicar filtros
+          const applyButton = document.getElementById('apply-filters-btn');
+          if (applyButton) {
+            applyButton.addEventListener('click', applyFilters);
+          }
+
+          // Manejar botón Next
+          const nextButton = document.getElementById('next-btn');
+          if (nextButton) {
+            nextButton.addEventListener('click', nextStep);
+          }
+
+          // ✅ REFACTORIZADO: Event listeners robustos para períodos de curación
+          const curationBtns = ['curation-btn-24h', 'curation-btn-7d', 'curation-btn-30d'];
+          curationBtns.forEach(buttonId => {
+            const btn = document.getElementById(buttonId) as
+              | (HTMLElement & {
+                  dataset: { period: string; value: string };
+                })
+              | null;
+            if (btn) {
+              btn.addEventListener(
+                'click',
+                function (this: HTMLElement & { dataset: { period: string; value: string } }) {
+                  const period = this.dataset.period;
+                  const value = parseFloat(this.dataset.value || '0');
+                  if (period) {
+                    selectCurationPeriod(period, value);
+                  }
+                }
+              );
+            }
+          });
+
+          // Cargar configuración guardada si existe
+          const configLoaded = loadFilterConfiguration();
+
+          // Cargar datos de curación al inicializar con retry
+          loadCurationDataWithRetry();
+
+          // Listener para actualizaciones de datos de curación desde el dashboard
+          // @ts-ignore -- Evento personalizado no incluido en WindowEventMap
+          window.addEventListener('curation-stats-updated', function (event: any) {
+            console.log('🔄 Filters: Evento de actualización de estadísticas recibido');
+            if (event.detail) {
+              // Actualizar directamente con los nuevos datos
+              const curationData = event.detail;
+              console.log('📊 Filters: Actualizando con datos del evento:', curationData);
+
+              const buttonIds = ['curation-btn-24h', 'curation-btn-7d', 'curation-btn-30d'];
+              buttonIds.forEach(buttonId => {
+                const btn = document.getElementById(buttonId);
+                if (!btn) return;
+
+                const period = btn.dataset.period;
+                const valueElement = btn.querySelector('.curation-value');
+
+                if (valueElement) {
+                  let value = 0;
+                  switch (period) {
+                    case '24h':
+                      value = curationData.curation24h || 0;
+                      break;
+                    case '7d':
+                      value = curationData.curation7d || 0;
+                      break;
+                    case '30d':
+                      value = curationData.curation30d || 0;
+                      break;
+                  }
+
+                  btn.dataset.value = value.toString();
+                  valueElement.textContent = `${value.toFixed(4)} HP`;
+                  console.log(
+                    `✅ Filters: Actualizado ${buttonId} desde evento con valor ${value.toFixed(4)} HP`
+                  );
+                }
+              });
+            }
+          });
+
+          // Si no había configuración guardada, renderizar con valores por defecto
+          if (!configLoaded) {
+            renderExcludedUsers();
+          }
+        } // Fin de setupEventListeners
+
+        // Función para guardar configuración de filtros
+        function saveFilterConfiguration(): void {
+          const config: FilterConfiguration = {
+            ...window.filterState,
+            timestamp: new Date().toISOString(),
+            version: '1.0',
+          };
+          localStorage.setItem('aliento_filter_config', JSON.stringify(config));
+          console.log('💾 Configuración de filtros guardada:', config);
+        }
+
+        // Función para cargar configuración de filtros
+        function loadFilterConfiguration(): boolean {
+          try {
+            const savedConfig = localStorage.getItem('aliento_filter_config');
+            if (savedConfig) {
+              const config = JSON.parse(savedConfig) as FilterConfiguration;
+              console.log('📂 Configuración de filtros cargada:', config);
+
+              // Aplicar configuración guardada
+              window.filterState.timePeriod = config.timePeriod || 30;
+              window.filterState.minimumHP = config.minimumHP || 50;
+              window.filterState.excludedUsers = config.excludedUsers || [];
+              window.filterState.curationPeriod = config.curationPeriod || '30d';
+              window.filterState.curationValue = config.curationValue || 0;
+
+              // Actualizar UI con valores guardados
+              setActiveButton('time-period', window.filterState.timePeriod.toString());
+              setActiveButton('minimum-hp', window.filterState.minimumHP.toString());
+
+              // Actualizar input de HP personalizado
+              const customHPInput = document.getElementById(
+                'custom-hp-input'
+              ) as HTMLInputElement | null;
+              if (customHPInput) customHPInput.value = window.filterState.minimumHP.toString();
+
+              // Seleccionar período de curación guardado
+              selectCurationPeriod(
+                window.filterState.curationPeriod,
+                window.filterState.curationValue
+              );
+
+              // 🔄 VERIFICAR QUE EL PERÍODO ACTIVO SE APLICÓ CORRECTAMENTE
+              setTimeout(() => {
+                const activeBtn = document.querySelector(
+                  '[data-filter-type="curation-period"][data-filter-state="active"]'
+                ) as (HTMLElement & { dataset: { value: string; period: string } }) | null;
+
+                if (activeBtn) {
+                  console.log('✅ Botón activo después de cargar config:', {
+                    period: activeBtn.dataset.period,
+                    value: activeBtn.dataset.value,
+                    filterState: window.filterState.curationPeriod,
+                  });
+                } else {
+                  console.warn('⚠️ No se encontró botón activo después de cargar config');
+                }
+              }, 100);
+
+              // Renderizar usuarios excluidos
+              renderExcludedUsers();
+
+              // Mostrar indicador de configuración cargada
+              showConfigLoadedIndicator();
+
+              return true;
+            }
+          } catch (error) {
+            console.error('Error cargando configuración:', error);
+          }
+          return false;
+        }
+
+        // Función para mostrar indicador de configuración cargada
+        function showConfigLoadedIndicator(): void {
+          const container = document.querySelector('.bg-\\[\\#18181b\\]') as HTMLElement | null;
+          if (container) {
+            const indicator = document.createElement('div');
+            indicator.className =
+              'config-loaded-indicator absolute top-4 right-4 bg-green-600/20 border border-green-600/50 rounded-lg px-3 py-1 text-green-400 text-sm flex items-center gap-2';
+            indicator.innerHTML = `
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            Configuración cargada
+          `;
+            container.style.position = 'relative';
+            container.appendChild(indicator);
+
+            // Remover indicador después de 3 segundos
+            setTimeout(() => {
+              indicator.style.opacity = '0';
+              indicator.style.transition = 'opacity 0.5s';
+              setTimeout(() => indicator.remove(), 500);
+            }, 3000);
+          }
+        }
+
+        // Función para configurar navegación SPA
+        function setupSPANavigation() {
+          // Resetear en cada navegación
+          document.addEventListener('astro:page-load', () => {
+            console.log('🔄 Filters: Astro page load - reseteando estado');
+            filtersInitialized = false;
+            initializationPromise = null;
+            initializeFilters();
+          });
+
+          // También escuchar DOMContentLoaded para la primera carga
+          document.addEventListener('DOMContentLoaded', () => {
+            console.log('🔄 Filters: DOM ready');
+            initializeFilters();
+          });
+
+          // Inicialización inmediata si el DOM ya está listo
+          if (document.readyState !== 'loading') {
+            console.log('🔄 Filters: DOM ya listo, inicializando inmediatamente');
+            setTimeout(() => initializeFilters(), 50);
+          }
+        }
+
+        // Hacer funciones globales
+        window.removeExcludedUser = removeExcludedUser;
+        window.filterState = window.filterState; // Asegurar que esté disponible globalmente
+
+        // Inicializar sistema SPA
+        setupSPANavigation();
+      })(); // Fin del IIFE
+    </script>
+
+    <style>
+      /* Estilos para botones inactivos */
+      .filter-btn[data-filter-state='inactive'] {
+        background-color: #232329;
+        color: #d1d5db;
+        border: 1px solid #232329;
+      }
+
+      .filter-btn[data-filter-state='inactive']:hover {
+        background-color: #2a2a32;
+      }
+
+      /* Estilos para botones activos */
+      .filter-btn[data-filter-state='active'] {
+        background-color: #0284c7;
+        color: white;
+        font-weight: 600;
+        border: 1px solid #0284c7;
+      }
+
+      .filter-btn[data-filter-state='active']:hover {
+        background-color: #0369a1;
+      }
+
+      /* Estilos específicos para botones de curación */
+      .curation-period-btn[data-filter-state='inactive'] {
+        background-color: #232329;
+        border: 1px solid #2a2a32;
+      }
+
+      .curation-period-btn[data-filter-state='inactive']:hover {
+        background-color: #2a2a32;
+      }
+
+      .curation-period-btn[data-filter-state='active'] {
+        background-color: #059669;
+        border: 1px solid #059669;
+      }
+
+      .curation-period-btn[data-filter-state='active']:hover {
+        background-color: #047857;
+      }
+
+      /* Estilos para radio buttons de curación */
+      .curation-period-btn[data-filter-state='inactive'] .curation-radio {
+        border: 2px solid #6b7280;
+        background-color: transparent;
+      }
+
+      .curation-period-btn[data-filter-state='active'] .curation-radio {
+        background-color: white;
+        border-color: white;
+      }
+
+      /* Transiciones suaves */
+      .filter-btn,
+      .curation-period-btn {
+        transition: all 0.15s ease-in-out;
+      }
+    </style>
+
+    <!-- Minimum HP -->
+    <div>
+      <h3 class="text-sm font-semibold text-gray-300 mb-3">Minimum HP</h3>
+      <div class="grid grid-cols-2 gap-2 mb-3" data-filter-group="minimum-hp">
+        <button
+          id="min-hp-btn-50"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="minimum-hp"
+          data-filter-value="50"
+          data-filter-state="active"
+          data-value="50"
+        >
+          50 HP
+        </button>
+        <button
+          id="min-hp-btn-100"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="minimum-hp"
+          data-filter-value="100"
+          data-filter-state="inactive"
+          data-value="100"
+        >
+          100 HP
+        </button>
+        <button
+          id="min-hp-btn-500"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="minimum-hp"
+          data-filter-value="500"
+          data-filter-state="inactive"
+          data-value="500"
+        >
+          500 HP
+        </button>
+        <button
+          id="min-hp-btn-1000"
+          class="filter-btn py-2 px-4 rounded-lg transition-all duration-150"
+          data-filter-type="minimum-hp"
+          data-filter-value="1000"
+          data-filter-state="inactive"
+          data-value="1000"
+        >
+          1000 HP
+        </button>
+      </div>
+      <div class="relative">
+        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">$</span>
+        <input
+          id="custom-hp-input"
+          type="number"
+          value="50"
+          class="w-full bg-[#232329] border border-[#232329] text-white placeholder-gray-500 pl-8 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-600 transition"
+        />
+      </div>
+    </div>
+
+    <!-- Excluded Accounts -->
+    <div>
+      <h3 class="text-sm font-semibold text-gray-300 mb-3">Excluded Accounts</h3>
+      <div class="relative">
+        <svg
+          class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+            clip-rule="evenodd"></path>
+        </svg>
+        <input
+          id="excluded-username-input"
+          type="text"
+          placeholder="Add username to exclude"
+          class="w-full bg-[#232329] border border-[#232329] text-white placeholder-gray-500 pl-10 pr-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-600 transition"
+        />
+      </div>
+
+      <!-- Lista de usuarios excluidos -->
+      <div id="excluded-users-list" class="mt-3 space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- Botones de Confirmación -->
+  <div class="mt-6 flex justify-center items-center relative">
+    <!-- Botón Apply/Edit Filters (centrado) -->
+    <button
+      id="apply-filters-btn"
+      class="bg-sky-600 hover:bg-sky-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-[#18181b] shadow-lg hover:shadow-xl flex items-center gap-2"
+    >
+      <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+        <path
+          fill-rule="evenodd"
+          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+          clip-rule="evenodd"></path>
+      </svg>
+      Apply Filters
+    </button>
+
+    <!-- Botón Next (a la derecha, inicialmente oculto) -->
+    <button
+      id="next-btn"
+      class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-[#18181b] shadow-lg hover:shadow-xl absolute right-0 hidden"
+      style="display: none;"
+    >
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fill-rule="evenodd"
+            d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+            clip-rule="evenodd"></path>
+        </svg>
+        Next
+      </div>
+    </button>
+  </div>
+</div>

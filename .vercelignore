@@ -1,0 +1,58 @@
+# Dependencies
+node_modules/
+
+# Development files
+.env.local
+.env.development
+.env.test
+
+# Documentation
+*.md
+!README.md
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+.astro/
+*.tsbuildinfo
+.eslintcache
+.prettiercache
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.*
+*.spec.*
+
+# Debug files
+debug-*.js
+*.debug.*
+
+# Temporary files
+tmp/
+temp/
+
+# Build artifacts (will be generated during build)
+dist/
+build/
+
+# Development scripts
+scripts/dev/
+scripts/test/
+
+# Local development
+.local 

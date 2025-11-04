@@ -1,0 +1,693 @@
+---
+// Tabla de delegaciones con skeleton loading mejorado
+---
+
+<div class="bg-[#18181b] rounded-2xl border border-[#232329] shadow-xl overflow-hidden mb-8">
+  <div class="p-6 border-b border-[#232329]">
+    <div class="flex justify-between items-center">
+      <div>
+        <h2 class="text-xl font-bold text-white">Current Delegations</h2>
+        <p class="text-gray-400 text-sm mt-1">All active delegations to your account</p>
+        <div class="flex items-center gap-2 mt-2">
+          <div class="bg-green-600/20 border border-green-600/50 rounded-lg px-2 py-1">
+            <span class="text-green-400 text-xs font-medium">⚡ Optimized</span>
+          </div>
+          <span class="text-gray-500 text-xs">Essential data only - instant loading</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div id="delegation-stats" class="text-right text-sm">
+          <p class="text-gray-400">Total Delegations</p>
+          <p id="total-delegations" class="text-white font-bold">--</p>
+        </div>
+        <div class="text-right text-sm">
+          <p class="text-gray-400">Total HP</p>
+          <p id="total-hp-display" class="text-green-400 font-bold">-- HP</p>
+        </div>
+        <button
+          id="refresh-btn"
+          class="bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-4 rounded-lg shadow transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 flex items-center gap-2"
+          title="Refresh delegations"
+        >
+          <svg
+            id="refresh-icon"
+            class="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            ></path>
+          </svg>
+          <span class="hidden sm:inline">Refresh</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton Loading State -->
+  <div id="skeleton-state" class="hidden">
+    <!-- Skeleton para estadísticas -->
+    <div class="p-6 border-b border-[#232329]">
+      <div class="flex justify-between items-center">
+        <div class="flex-1">
+          <div class="h-6 bg-gray-600 rounded w-48 mb-2 animate-pulse"></div>
+          <div class="h-4 bg-gray-700 rounded w-64 animate-pulse"></div>
+        </div>
+        <div class="flex items-center gap-6">
+          <div class="text-right">
+            <div class="h-3 bg-gray-700 rounded w-24 mb-1 animate-pulse"></div>
+            <div class="h-5 bg-gray-600 rounded w-12 animate-pulse"></div>
+          </div>
+          <div class="text-right">
+            <div class="h-3 bg-gray-700 rounded w-16 mb-1 animate-pulse"></div>
+            <div class="h-5 bg-gray-600 rounded w-20 animate-pulse"></div>
+          </div>
+          <div class="h-10 bg-gray-600 rounded-lg w-24 animate-pulse"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Skeleton para tabla -->
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead>
+          <tr class="bg-[#232329]">
+            <th class="text-left py-4 px-6">
+              <div class="h-4 bg-gray-600 rounded w-20 animate-pulse"></div>
+            </th>
+            <th class="text-left py-4 px-6">
+              <div class="h-4 bg-gray-600 rounded w-12 animate-pulse"></div>
+            </th>
+            <th class="text-left py-4 px-6">
+              <div class="h-4 bg-gray-600 rounded w-16 animate-pulse"></div>
+            </th>
+            <th class="text-left py-4 px-6">
+              <div class="h-4 bg-gray-600 rounded w-16 animate-pulse"></div>
+            </th>
+            <th class="text-left py-4 px-6">
+              <div class="h-4 bg-gray-600 rounded w-24 animate-pulse"></div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Skeleton rows -->
+          {
+            Array.from({ length: 8 }).map(() => (
+              <tr class="border-b border-[#232329] last:border-b-0">
+                <td class="py-4 px-6">
+                  <div class="flex items-center gap-3">
+                    <div class="h-8 w-8 bg-gray-600 rounded-full animate-pulse" />
+                    <div class="h-4 bg-gray-600 rounded w-24 animate-pulse" />
+                  </div>
+                </td>
+                <td class="py-4 px-6">
+                  <div class="h-4 bg-gray-600 rounded w-20 animate-pulse" />
+                </td>
+                <td class="py-4 px-6">
+                  <div class="h-4 bg-gray-600 rounded w-16 animate-pulse" />
+                </td>
+                <td class="py-4 px-6">
+                  <div class="h-4 bg-gray-600 rounded w-32 animate-pulse" />
+                </td>
+                <td class="py-4 px-6">
+                  <div class="h-4 bg-gray-600 rounded w-20 animate-pulse" />
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Loading progress indicator -->
+    <div class="p-4 bg-[#232329] border-t border-[#2a2a32]">
+      <div class="flex items-center justify-center gap-3 text-gray-400 text-sm">
+        <svg
+          class="animate-spin h-4 w-4"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <span id="loading-progress">Cargando delegaciones...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fallback Loading State (for compatibility) -->
+  <div id="loading-state" class="p-8 text-center hidden">
+    <div class="flex flex-col items-center gap-4">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
+      <div>
+        <p class="text-white font-medium">Loading delegations...</p>
+        <p id="loading-progress-fallback" class="text-gray-400 text-sm mt-1">Initializing...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div id="error-state" class="p-8 text-center hidden">
+    <div class="flex flex-col items-center gap-3">
+      <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <p class="text-lg font-medium text-white">Error loading delegations</p>
+        <p id="error-message" class="text-red-400 text-sm mt-1">Something went wrong</p>
+        <button
+          id="retry-btn"
+          class="mt-3 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg shadow transition-all duration-150"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div id="table-container" class="overflow-x-auto hidden">
+    <table class="w-full">
+      <thead>
+        <tr class="bg-[#232329]">
+          <th class="text-left py-4 px-6 text-sm font-semibold text-gray-300"> Delegator </th>
+          <th class="text-left py-4 px-6 text-sm font-semibold text-gray-300"> HP </th>
+          <th class="text-left py-4 px-6 text-sm font-semibold text-gray-300"> % Share </th>
+        </tr>
+      </thead>
+      <tbody id="delegations-tbody">
+        <!-- Delegations will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty State -->
+  <div id="empty-state" class="p-12 text-center hidden">
+    <div class="flex flex-col items-center gap-3">
+      <svg class="w-16 h-16 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+        ></path>
+      </svg>
+      <div>
+        <p class="text-lg font-medium text-white">No delegations found</p>
+        <p class="text-gray-400 text-sm">You don't have any active delegations yet</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Import required modules - dynamic imports for client-side compatibility
+
+  // Cache settings
+  const CACHE_KEY_PREFIX = 'delegationsCache';
+  const CACHE_DURATION = 3 * 60 * 1000; // 3 minutos en ms
+
+  // Get cache key for specific user
+  function getCacheKey(username: string): string {
+    return `${CACHE_KEY_PREFIX}_${username}`;
+  }
+
+  // Importar servicio global de avatar cache
+  let avatarCacheService: any = null;
+
+  // Función para inicializar el servicio de avatar cache
+  async function initAvatarCache() {
+    if (!avatarCacheService) {
+      const { getAvatarCache } = await import('../../lib/avatar-cache');
+      avatarCacheService = getAvatarCache();
+    }
+    return avatarCacheService;
+  }
+
+  // Función para obtener avatar con el nuevo servicio
+  async function getCachedAvatarUrl(username: string): Promise<string> {
+    if (!username) return '';
+
+    const cache = await initAvatarCache();
+    return cache.getAvatarUrl(username);
+  }
+
+  // ✅ REFACTORIZADO: Estado global robusto para evitar múltiples cargas
+  let currentDelegations: unknown[] = [];
+  let isLoading = false;
+  let isInitialized = false;
+  let loadingPromise: Promise<void> | null = null;
+  let currentAbortController: AbortController | null = null;
+
+  // DOM elements - with safe null checks
+  const loadingState = document.getElementById('loading-state');
+  const errorState = document.getElementById('error-state');
+  const tableContainer = document.getElementById('table-container');
+  const emptyState = document.getElementById('empty-state');
+  const delegationsTbody = document.getElementById('delegations-tbody');
+  const totalDelegations = document.getElementById('total-delegations');
+  const totalHpDisplay = document.getElementById('total-hp-display');
+  const loadingProgress = document.getElementById('loading-progress');
+  const errorMessage = document.getElementById('error-message');
+  const refreshBtn = document.getElementById('refresh-btn');
+  const refreshIcon = document.getElementById('refresh-icon');
+  const retryBtn = document.getElementById('retry-btn');
+  const skeletonState = document.getElementById('skeleton-state');
+
+  // State management
+  function showLoading(message = 'Cargando delegaciones...') {
+    hideAllStates();
+    // Preferir skeleton state sobre loading simple
+    if (skeletonState) {
+      skeletonState.classList.remove('hidden');
+      if (loadingProgress) loadingProgress.textContent = message;
+    } else {
+      loadingState?.classList.remove('hidden');
+      const fallbackProgress = document.getElementById('loading-progress-fallback');
+      if (fallbackProgress) fallbackProgress.textContent = message;
+    }
+  }
+
+  function showError(message = 'Something went wrong') {
+    hideAllStates();
+    errorState?.classList.remove('hidden');
+    if (errorMessage) errorMessage.textContent = message;
+  }
+
+  function showTable() {
+    hideAllStates();
+    tableContainer?.classList.remove('hidden');
+  }
+
+  function showEmpty() {
+    hideAllStates();
+    emptyState?.classList.remove('hidden');
+  }
+
+  function hideAllStates() {
+    skeletonState?.classList.add('hidden');
+    loadingState?.classList.add('hidden');
+    errorState?.classList.add('hidden');
+    tableContainer?.classList.add('hidden');
+    emptyState?.classList.add('hidden');
+  }
+
+  // Utility functions (unused functions removed for optimization)
+
+  // Render delegations table (updated to use async avatar loading)
+  async function renderDelegations(delegations: unknown[]): Promise<void> {
+    if (!delegationsTbody) return;
+
+    delegationsTbody.innerHTML = '';
+
+    // Precargar avatares para todos los delegadores
+    const usernames = delegations.map((d: any) => d.delegator).filter(Boolean);
+    const cache = await initAvatarCache();
+    await cache.preloadAvatars(usernames);
+
+    for (const [index, delegation] of delegations.entries()) {
+      const row = document.createElement('tr');
+      row.className = `border-b border-[#232329] hover:bg-[#1a1a1d] transition-colors ${
+        index % 2 === 0 ? 'bg-[#18181b]' : 'bg-[#1a1a1d]'
+      }`;
+
+      // Type assertion para delegation
+      const del = delegation as any;
+
+      // Obtener avatar URL usando el cache optimizado
+      const avatarUrl = await getCachedAvatarUrl(del.delegator);
+
+      row.innerHTML = `
+        <td class="py-4 px-6">
+          <div class="flex items-center gap-3">
+            <img 
+              src="${avatarUrl}" 
+              alt="@${del.delegator}" 
+              class="w-8 h-8 rounded-full object-cover bg-gray-600"
+              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+            />
+            <div class="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center text-white text-sm font-bold" style="display: none;">
+              ${del.delegator.substring(0, 2).toUpperCase()}
+            </div>
+            <div>
+              <p class="text-white text-xl font-medium">@${del.delegator}</p>
+              <p class="text-gray-400 text-xs">Block: <a href="https://hivehub.dev/b/${del.block_num || ''}" target="_blank" class="text-blue-100 hover:text-blue-200 ">${del.block_num || 'Loading...'}</a></p>
+            </div>
+          </div>
+        </td>
+        <td class="py-4 px-6">
+          <p class="text-green-400 font-bold text-lg">${del.hpAmount.toLocaleString('en-US')} HP</p>
+          <p class="text-gray-400 text-xs">Hive Power</p>
+        </td>
+        <td class="py-4 px-6">
+          <div class="flex items-center gap-2">
+            <p class="text-blue-400 font-bold text-lg">${(del.participationPercentage || 0).toFixed(2)}%</p>
+            <div class="w-16 bg-gray-700 rounded-full h-2">
+              <div 
+                class="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full transition-all duration-300" 
+                style="width: ${Math.min(100, del.participationPercentage || 0)}%"
+              ></div>
+            </div>
+          </div>
+          <p class="text-gray-400 text-xs">of total HP</p>
+        </td>
+      `;
+      delegationsTbody.appendChild(row);
+    }
+
+    // Update stats with USA formatting
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const totalHp = delegations.reduce((sum: number, d: any) => sum + (d.hpAmount || 0), 0);
+    if (totalDelegations) totalDelegations.textContent = delegations.length.toString();
+    if (totalHpDisplay) totalHpDisplay.textContent = `${totalHp.toLocaleString('en-US')} HP`;
+    // Emitir evento global para el header
+    window.dispatchEvent(new CustomEvent('delegations:totalHP', { detail: totalHp }));
+  }
+
+  // ✅ REFACTORIZADO: Función robusta para cargar delegaciones
+  async function loadDelegations() {
+    // 🛡️ Evitar múltiples cargas simultáneas
+    if (isLoading) {
+      console.log('⚠️ Ya está cargando delegaciones, saltando...');
+      return;
+    }
+
+    // 🔄 Si ya hay una carga en progreso, esperar a que termine
+    if (loadingPromise) {
+      console.log('⏳ Esperando carga en progreso...');
+      return loadingPromise;
+    }
+
+    // 🚫 Cancelar cualquier request HTTP previo
+    if (currentAbortController) {
+      currentAbortController.abort();
+      console.log('🚫 Cancelando requests HTTP previos de delegaciones');
+    }
+
+    // 🆕 Crear nuevo AbortController para esta carga
+    currentAbortController = new AbortController();
+
+    let username: string | null = null;
+
+    // 📝 Marcar como carga en progreso
+    loadingPromise = (async () => {
+      try {
+        isLoading = true;
+        showLoading('Getting logged user...');
+
+        // Get container and auth use case
+        const { container } = await import('../../application/Container');
+        const authUseCase = container.getAuthenticationUseCase();
+
+        // Get current user
+        username = authUseCase.getCurrentUser();
+        if (!username) {
+          showError('No user logged in. Please login first.');
+          return;
+        }
+
+        // 🚫 Verificar cancelación temprana
+        if (currentAbortController?.signal.aborted) {
+          console.log('🚫 Carga de delegaciones cancelada');
+          return;
+        }
+
+        // Check cache first for this specific user
+        const userCacheKey = getCacheKey(username);
+        const cachedData = localStorage.getItem(userCacheKey);
+        if (cachedData) {
+          try {
+            const cached = JSON.parse(cachedData);
+            const now = Date.now();
+
+            if (now - cached.timestamp < CACHE_DURATION) {
+              console.log(`⚡ Using cached data for @${username}`);
+              currentDelegations = cached.delegations;
+
+              const totalHP = currentDelegations.reduce(
+                (sum, d: any) => sum + (d.hpAmount || 0),
+                0
+              ) as number;
+
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const cachedWithPercentages = currentDelegations.map((delegation: any) => {
+                const participationPercentage =
+                  totalHP > 0 ? (delegation.hpAmount / totalHP) * 100 : 0;
+                return {
+                  ...delegation,
+                  participationPercentage: participationPercentage,
+                };
+              });
+
+              await renderDelegations(cachedWithPercentages);
+              showTable();
+
+              // Show cache info
+              const cacheAge = Math.floor((now - cached.timestamp) / 1000);
+              console.log(
+                `📦 Cache age: ${cacheAge}s (expires in ${Math.floor((CACHE_DURATION - (now - cached.timestamp)) / 1000)}s)`
+              );
+
+              // 📊 Resumen del cálculo de % Share desde cache
+              console.log('📊 Resumen de participación (desde cache):');
+              cachedWithPercentages.slice(0, 5).forEach((delegation, index) => {
+                console.log(
+                  `  ${index + 1}. @${delegation.delegator}: ${delegation.participationPercentage.toFixed(2)}%`
+                );
+              });
+              if (cachedWithPercentages.length > 5) {
+                console.log(`  ... y ${cachedWithPercentages.length - 5} delegadores más`);
+              }
+
+              return;
+            } else {
+              console.log(`🗑️ Cache expired for @${username}, loading fresh data`);
+              localStorage.removeItem(userCacheKey);
+            }
+          } catch (cacheError) {
+            console.warn('⚠️ Error parsing cache, clearing:', cacheError);
+            localStorage.removeItem(userCacheKey);
+          }
+        }
+
+        showLoading(`Loading delegations for @${username}...`);
+
+        // FAST INITIAL LOAD: Load basic delegation data first
+        showLoading(`Loading basic delegation data...`);
+
+        // Get basic delegations first (fast) - dynamic import for client-side compatibility
+        const { getAllDelegationsWithDetails } = await import('../../lib/get-delegations');
+        currentDelegations = await getAllDelegationsWithDetails(username);
+
+        if (!currentDelegations || currentDelegations.length === 0) {
+          showEmpty();
+          console.log(`ℹ️ No delegations found for @${username}`);
+          return;
+        }
+
+        // ✅ CALCULAR % SHARE después de cargar delegadores
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const totalHP = currentDelegations.reduce((sum, d: any) => sum + (d.hpAmount || 0), 0);
+        console.log(`📊 Total HP calculado: ${totalHP.toLocaleString('en-US')} HP`);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const basicDetails = currentDelegations.map((delegation: any) => {
+          const participationPercentage = totalHP > 0 ? (delegation.hpAmount / totalHP) * 100 : 0;
+          console.log(
+            `📈 @${delegation.delegator}: ${delegation.hpAmount.toLocaleString('en-US')} HP (${participationPercentage.toFixed(2)}%)`
+          );
+
+          return {
+            delegator: delegation.delegator,
+            hpAmount: delegation.hpAmount,
+            participationPercentage: participationPercentage,
+            vestsAmount: delegation.amount,
+            block_num: delegation.operation_details?.block_num || delegation.block_num,
+            // No timestamp or trx_id initially for fast load
+          };
+        });
+
+        await renderDelegations(basicDetails);
+        showTable();
+        console.log(
+          `✅ Loaded ${basicDetails.length} delegations with essential data only (OPTIMIZED)`
+        );
+
+        // 📊 Resumen del cálculo de % Share
+        console.log('📊 Resumen de participación:');
+        basicDetails.slice(0, 5).forEach((delegation, index) => {
+          console.log(
+            `  ${index + 1}. @${delegation.delegator}: ${delegation.participationPercentage.toFixed(2)}%`
+          );
+        });
+        if (basicDetails.length > 5) {
+          console.log(`  ... y ${basicDetails.length - 5} delegadores más`);
+        }
+
+        // 🚀 OPTIMIZACIÓN: Solo datos esenciales - tabla limpia y rápida
+        console.log(
+          '⚡ Dashboard optimizado: Columnas de fecha y transacción eliminadas para máxima velocidad'
+        );
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log('🚫 Carga de delegaciones cancelada correctamente');
+          return;
+        }
+        console.error('❌ Error loading delegations:', error);
+        showError((error as Error)?.message || 'Failed to load delegations');
+      } finally {
+        // Cache the latest delegations with calculated percentages
+        if (currentDelegations && currentDelegations.length > 0 && username) {
+          const userCacheKey = getCacheKey(username);
+
+          // ✅ Guardar datos con porcentajes calculados
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const totalHP = currentDelegations.reduce((sum, d: any) => sum + (d.hpAmount || 0), 0);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const delegationsWithPercentages = currentDelegations.map((delegation: any) => ({
+            ...delegation,
+            participationPercentage: totalHP > 0 ? (delegation.hpAmount / totalHP) * 100 : 0,
+          }));
+
+          const cacheData = {
+            delegations: delegationsWithPercentages,
+            timestamp: Date.now(),
+            username: username,
+          };
+
+          try {
+            // Clean old cache entries before saving new ones
+            const allKeys = Object.keys(localStorage);
+            const oldCacheKeys = allKeys.filter(
+              key => key.startsWith(CACHE_KEY_PREFIX) && key !== userCacheKey
+            );
+
+            // Remove old cache entries to prevent localStorage overflow
+            oldCacheKeys.forEach(key => {
+              try {
+                localStorage.removeItem(key);
+              } catch (e) {
+                console.warn('⚠️ Error removing old cache entry:', e);
+              }
+            });
+
+            localStorage.setItem(userCacheKey, JSON.stringify(cacheData));
+            console.log(
+              `💾 Cached ${delegationsWithPercentages.length} delegations with percentages for @${username}`
+            );
+
+            if (oldCacheKeys.length > 0) {
+              console.log(`🧹 Cleaned ${oldCacheKeys.length} old cache entries`);
+            }
+          } catch (storageError) {
+            console.warn('⚠️ Error saving to cache:', storageError);
+            // Try to clear some space and retry once
+            try {
+              const allKeys = Object.keys(localStorage);
+              const cacheKeys = allKeys.filter(key => key.startsWith(CACHE_KEY_PREFIX));
+              cacheKeys.forEach(key => localStorage.removeItem(key));
+              localStorage.setItem(userCacheKey, JSON.stringify(cacheData));
+              console.log('🔄 Retry cache save successful after cleanup');
+            } catch (retryError) {
+              console.warn('⚠️ Retry cache save failed:', retryError);
+            }
+          }
+        }
+
+        // ✅ Limpiar estado global
+        isLoading = false;
+        isInitialized = true;
+        loadingPromise = null;
+
+        // Reset refresh button
+        if (refreshIcon) {
+          refreshIcon.classList.remove('animate-spin');
+        }
+      }
+    })();
+
+    return loadingPromise;
+  }
+
+  // ✅ REFACTORIZADO: Event listeners robustos
+  refreshBtn?.addEventListener('click', () => {
+    if (refreshIcon) {
+      refreshIcon.classList.add('animate-spin');
+    }
+    // Clear all delegation caches on manual refresh
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith(CACHE_KEY_PREFIX)) {
+        localStorage.removeItem(key);
+      }
+    });
+    console.log('🧹 Cleared all delegation caches');
+
+    // Reset state for fresh load
+    isInitialized = false;
+    loadDelegations();
+  });
+
+  retryBtn?.addEventListener('click', () => {
+    // Reset state for retry
+    isInitialized = false;
+    loadDelegations();
+  });
+
+  // ✅ REFACTORIZADO: Inicialización robusta y única
+  function initializeTableDelegations() {
+    // 🛡️ Solo ejecutar una vez
+    if (isInitialized) {
+      console.log('⚠️ Tabla de delegaciones ya inicializada, saltando...');
+      return;
+    }
+
+    console.log('🎯 Table Delegations component initialized');
+    loadDelegations();
+  }
+
+  // 🚀 Setup único de inicialización
+  function setupTableInitialization() {
+    console.log('🔧 Configurando inicialización de tabla de delegaciones...');
+
+    // 📱 Función unificada de inicialización
+    function handleInitialization(source: string) {
+      console.log(`📡 Tabla: ${source} event`);
+      initializeTableDelegations();
+    }
+
+    // 🎯 Event listeners únicos con { once: true }
+    document.addEventListener('DOMContentLoaded', () => handleInitialization('DOMContentLoaded'), {
+      once: true,
+    });
+    document.addEventListener('astro:page-load', () => handleInitialization('Astro page load'), {
+      once: true,
+    });
+    document.addEventListener('aliento:page-ready', () => handleInitialization('Página lista'), {
+      once: true,
+    });
+
+    // ⚡ Inicialización inmediata si está listo
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      console.log('⚡ Tabla: Página ya lista, inicializando inmediatamente');
+      setTimeout(() => handleInitialization('Inmediata'), 50);
+    }
+  }
+
+  // 🚀 Ejecutar configuración
+  setupTableInitialization();
+</script>

@@ -1,0 +1,195 @@
+---
+import BrandNav from '../base/BrandNav.astro';
+
+export interface Props {
+  username?: string;
+  showStats?: boolean;
+}
+
+const { username, showStats = true } = Astro.props;
+---
+
+<!-- Brand Navigation with transparent background -->
+<BrandNav user={username} />
+
+<!-- Spacer para compensar el nav fijo -->
+<div class="h-14"></div>
+
+<script>
+  import { getHiveAvatarUrl } from '../../domain/services/HiveAccountService';
+
+  // ✅ REFACTORIZADO: Estado global para evitar múltiples inicializaciones
+  let headerInitialized: boolean = false;
+  let headerInitializationPromise: Promise<void> | null = null;
+  let currentAbortController: AbortController | null = null;
+
+  // Función de inicialización del header (robusta y única)
+  async function initializeHeader() {
+    // 🛡️ Evitar múltiples inicializaciones
+    if (headerInitialized) {
+      console.log('⚠️ Header ya inicializado, saltando...');
+      return;
+    }
+
+    // 🔄 Si ya hay una inicialización en progreso, esperar a que termine
+    if (headerInitializationPromise) {
+      console.log('⏳ Esperando inicialización en progreso...');
+      return headerInitializationPromise;
+    }
+
+    // 🚫 Cancelar cualquier request HTTP previo
+    if (currentAbortController) {
+      currentAbortController.abort();
+      console.log('🚫 Cancelando requests HTTP previos');
+    }
+
+    // 🆕 Crear nuevo AbortController para esta inicialización
+    currentAbortController = new AbortController();
+
+    console.log('🔄 Inicializando header (versión robusta)...');
+
+    // 📝 Marcar como inicialización en progreso
+    headerInitializationPromise = (async () => {
+      try {
+        // Importar dependencias de la arquitectura hexagonal
+        const { container } = await import('../../application/Container');
+        const authUseCase = container.getAuthenticationUseCase();
+        const delegationsUseCase = container.getDelegationsUseCase();
+
+        // Elementos del DOM
+        const userGreeting = document.getElementById('user-greeting');
+        const userAvatar = document.getElementById('user-avatar-img') as HTMLImageElement | null;
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // Verificar autenticación
+        const username = authUseCase.getCurrentUser();
+        if (!username) {
+          console.log('📝 No hay usuario autenticado en header');
+          return; // No hacer nada si no está autenticado
+        }
+
+        // Configurar información de usuario
+        if (userGreeting) userGreeting.textContent = `@${username}`;
+        if (userAvatar) {
+          // Actualizar avatar (ya es un elemento <img>)
+          const avatarUrl = getHiveAvatarUrl(username);
+          userAvatar.src = avatarUrl;
+          userAvatar.alt = `@${username}`;
+        }
+
+        // Evento de logout (remover listeners existentes)
+        if (logoutBtn) {
+          logoutBtn.replaceWith(logoutBtn.cloneNode(true));
+          const newLogoutBtn = document.getElementById('logout-btn');
+          if (newLogoutBtn) {
+            newLogoutBtn.onclick = () => {
+              authUseCase.logout();
+              window.location.href = '/';
+            };
+          }
+        }
+
+        // Cargar estadísticas si están habilitadas
+
+        // ✅ Marcar como completamente inicializado
+        headerInitialized = true;
+        console.log('✅ Header inicializado correctamente');
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
+          console.log('🚫 Inicialización cancelada');
+          return;
+        }
+        console.warn('Error inicializando header:', error);
+      } finally {
+        // Limpiar el promise de inicialización
+        headerInitializationPromise = null;
+      }
+    })();
+
+    return headerInitializationPromise;
+  }
+
+  // ✅ REFACTORIZADO: Función para inicializar con retry (robusta)
+  function initializeHeaderWithRetry(maxRetries = 3, delay = 100) {
+    // 🛡️ Evitar múltiples retries si ya está inicializado
+    if (headerInitialized) {
+      console.log('⚠️ Header ya inicializado, saltando retry...');
+      return;
+    }
+
+    let retries = 0;
+
+    function tryInitialize() {
+      // Verificar que existan los elementos necesarios
+      const userGreeting = document.getElementById('user-greeting');
+      const userAvatar = document.getElementById('user-avatar-img');
+      const logoutBtn = document.getElementById('logout-btn');
+
+      // Verificar que al menos el elemento principal exista
+      if (userGreeting || userAvatar || logoutBtn) {
+        console.log('✅ Elementos del header encontrados, inicializando...');
+        initializeHeader();
+        return;
+      }
+
+      // También verificar si hay un usuario autenticado
+      const authUser = localStorage.getItem('authenticated_user');
+      if (!authUser) {
+        console.log('📝 No hay usuario autenticado, no se necesita inicializar header');
+        return;
+      }
+
+      if (retries < maxRetries) {
+        retries++;
+        console.log(`🔄 Reintentando inicialización del header (${retries}/${maxRetries})`);
+        setTimeout(tryInitialize, delay);
+      } else {
+        console.warn('⚠️ No se pudo inicializar el header - elementos no encontrados');
+        console.log('🔍 Elementos buscados:', {
+          userGreeting: !!document.getElementById('user-greeting'),
+          userAvatar: !!document.getElementById('user-avatar-img'),
+          logoutBtn: !!document.getElementById('logout-btn'),
+          authUser: !!authUser,
+        });
+      }
+    }
+
+    tryInitialize();
+  }
+
+  // ✅ REFACTORIZADO: Único punto de entrada robusto
+  function setupHeaderInitialization() {
+    // 🛡️ Solo ejecutar una vez
+    if (headerInitialized) {
+      console.log('⚠️ Header ya configurado, saltando...');
+      return;
+    }
+
+    console.log('🔧 Configurando inicialización del header...');
+
+    // 📱 Función unificada de inicialización
+    function handleInitialization(source: string) {
+      console.log(`📡 Header: ${source} event`);
+      initializeHeaderWithRetry();
+    }
+
+    // 🎯 Event listeners que permiten re-inicialización en navegación SPA
+    document.addEventListener('DOMContentLoaded', () => handleInitialization('DOMContentLoaded'));
+    document.addEventListener('astro:page-load', () => {
+      // Resetear estado para permitir re-inicialización
+      headerInitialized = false;
+      headerInitializationPromise = null;
+      handleInitialization('Astro page load');
+    });
+    document.addEventListener('aliento:page-ready', () => handleInitialization('Página lista'));
+
+    // ⚡ Inicialización inmediata si está listo
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      console.log('⚡ Header: Página ya lista, inicializando inmediatamente');
+      setTimeout(() => handleInitialization('Inmediata'), 50);
+    }
+  }
+
+  // 🚀 Ejecutar configuración
+  setupHeaderInitialization();
+</script>

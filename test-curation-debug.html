@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prueba de Curación - Debug</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .info {
+        background-color: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .console-output {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 10px;
+        margin-top: 10px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        max-height: 400px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔍 Prueba de Debug - Curación</h1>
+
+      <div class="info">
+        <strong>Objetivo:</strong> Verificar que las funciones de curación están funcionando
+        correctamente
+      </div>
+
+      <div id="status-area">
+        <div class="status info">⏳ Iniciando pruebas...</div>
+      </div>
+
+      <div>
+        <button onclick="testCurationFunction()">🧪 Probar Función de Curación</button>
+        <button onclick="testApiEndpoint()">🌐 Probar Endpoint Directo</button>
+        <button onclick="simulateUserAuth()">👤 Simular Usuario</button>
+        <button onclick="clearConsole()">🗑️ Limpiar Console</button>
+      </div>
+
+      <div class="console-output" id="console-output"></div>
+    </div>
+
+    <script>
+      // Función para mostrar mensajes en la consola visual
+      function addToConsole(message, type = 'info') {
+        const consoleOutput = document.getElementById('console-output');
+        const timestamp = new Date().toLocaleTimeString();
+        const formattedMessage = `[${timestamp}] ${message}\n`;
+        consoleOutput.textContent += formattedMessage;
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+
+        // También en la consola del navegador
+        if (type === 'error') {
+          console.error(message);
+        } else if (type === 'warn') {
+          console.warn(message);
+        } else {
+          console.log(message);
+        }
+      }
+
+      function updateStatus(message, type = 'info') {
+        const statusArea = document.getElementById('status-area');
+        const statusClass = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+        statusArea.innerHTML = `<div class="status ${statusClass}">${message}</div>`;
+      }
+
+      // Simular usuario autenticado
+      function simulateUserAuth() {
+        localStorage.setItem('authenticated_user', 'testuser');
+        addToConsole('✅ Usuario simulado configurado: testuser');
+        updateStatus('✅ Usuario simulado configurado', 'success');
+      }
+
+      // Función para probar la API directamente
+      async function testApiEndpoint() {
+        addToConsole('🌐 Probando endpoint /api/curation-stats...');
+
+        try {
+          const response = await fetch('/api/curation-stats');
+          const data = await response.json();
+
+          if (response.ok) {
+            addToConsole('✅ Endpoint respondió correctamente');
+            addToConsole(`📊 Datos recibidos: ${JSON.stringify(data, null, 2)}`);
+            updateStatus('✅ Endpoint funciona correctamente', 'success');
+          } else {
+            addToConsole(
+              `❌ Error en endpoint: ${response.status} ${response.statusText}`,
+              'error'
+            );
+            addToConsole(`📋 Respuesta: ${JSON.stringify(data, null, 2)}`);
+            updateStatus('❌ Error en endpoint', 'error');
+          }
+        } catch (error) {
+          addToConsole(`❌ Error de red: ${error.message}`, 'error');
+          updateStatus('❌ Error de red', 'error');
+        }
+      }
+
+      // Función para probar la función de curación (simular la del dashboard)
+      async function testCurationFunction() {
+        addToConsole('🧪 Probando función de curación...');
+
+        // Simular la función getCurationStatsData
+        const getCurationStatsData = async () => {
+          addToConsole('📡 Iniciando getCurationStatsData...');
+
+          const response = await fetch('/api/curation-stats');
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          addToConsole('✅ Datos obtenidos de la API');
+
+          return data;
+        };
+
+        try {
+          const data = await getCurationStatsData();
+          addToConsole('✅ Función de curación ejecutada exitosamente');
+          addToConsole(`📊 Resultado: ${JSON.stringify(data, null, 2)}`);
+          updateStatus('✅ Función de curación funciona correctamente', 'success');
+        } catch (error) {
+          addToConsole(`❌ Error en función de curación: ${error.message}`, 'error');
+          updateStatus('❌ Error en función de curación', 'error');
+        }
+      }
+
+      function clearConsole() {
+        document.getElementById('console-output').textContent = '';
+        addToConsole('🗑️ Consola limpiada');
+      }
+
+      // Inicializar al cargar la página
+      document.addEventListener('DOMContentLoaded', () => {
+        addToConsole('🚀 Página de debug cargada');
+        updateStatus('🚀 Página de debug lista', 'info');
+
+        // Verificar si hay usuario autenticado
+        const user = localStorage.getItem('authenticated_user');
+        if (user) {
+          addToConsole(`👤 Usuario encontrado: ${user}`);
+        } else {
+          addToConsole('👤 No hay usuario autenticado');
+        }
+      });
+    </script>
+  </body>
+</html>

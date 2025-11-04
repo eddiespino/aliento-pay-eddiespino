@@ -1,0 +1,61 @@
+{
+  "calculate": {
+    "title": "Calculate Curation Distribution - Aliento",
+    "description": "Calculate the distribution of curation rewards among delegators based on specific filters.",
+    "pageTitle": "Calculate Curation Distribution",
+    "pageSubtitle": "Distribution of rewards among @aliento delegators",
+    "backToDashboard": "← Back to Dashboard",
+    "currentPage": "Calculate Distribution"
+  },
+  "filters": {
+    "title": "Applied Filters",
+    "timePeriod": "Time Period",
+    "minimumHP": "Minimum HP",
+    "excludedUsers": "Excluded Users",
+    "days": "days",
+    "users": "users"
+  },
+  "calculation": {
+    "title": "Calculation Parameters",
+    "hivePowerToConsider": "HivePower to Consider",
+    "interestPercentage": "Interest Percentage"
+  },
+  "messages": {
+    "error": "Error",
+    "defaultFiltersTitle": "Using default filters",
+    "defaultFiltersDescription": "Default filters are being applied to show the curation distribution. To customize filters, use the dashboard.",
+    "customizeFilters": "Customize Filters"
+  },
+  "table": {
+    "title": "Curation Distribution",
+    "validDelegators": "valid delegators",
+    "totalHP": "Total HP",
+    "totalHive": "Total Hive",
+    "calculating": "Calculating distribution...",
+    "noDelegators": "No delegators meet the specified criteria",
+    "headers": {
+      "delegator": "Delegator",
+      "delegatedHP": "Delegated HP",
+      "participation": "Participation",
+      "hiveToReceive": "Hive to Receive",
+      "delegationDate": "Delegation Date"
+    },
+    "footer": {
+      "showing": "Showing",
+      "delegatedHP": "Delegated HP",
+      "hiveToReceive": "Hive to Receive"
+    }
+  },
+  "calculationInfo": {
+    "title": "Calculation Information",
+    "cutoffDate": "Cutoff Date",
+    "processedOperations": "Processed Operations",
+    "validDelegators": "Valid Delegators"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "block": "Block",
+    "of": "of"
+  }
+}

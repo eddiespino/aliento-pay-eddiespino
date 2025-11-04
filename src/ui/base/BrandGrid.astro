@@ -1,0 +1,46 @@
+---
+// 📊 Brand Grid Component - Sistema de grid responsivo
+export interface Props {
+  variant?: 'responsive' | 'auto' | 'fixed';
+  cols?: 1 | 2 | 3 | 4 | 5 | 6;
+  gap?: 'sm' | 'md' | 'lg' | 'xl';
+  class?: string;
+}
+
+const { 
+  variant = 'responsive',
+  cols = 3,
+  gap = 'md',
+  class: className = '',
+  ...props 
+} = Astro.props;
+
+const getGridClass = () => {
+  let baseClass = 'grid';
+  
+  // Gap classes
+  const gapClass = gap === 'sm' ? 'gap-4' :
+                  gap === 'lg' ? 'gap-8' :
+                  gap === 'xl' ? 'gap-12' : 'gap-6';
+  
+  // Grid variant classes
+  let gridClass = '';
+  
+  switch (variant) {
+    case 'auto':
+      gridClass = 'grid-brand-auto';
+      break;
+    case 'fixed':
+      gridClass = `grid-cols-${cols}`;
+      break;
+    default:
+      gridClass = 'grid-brand';
+  }
+  
+  return `${baseClass} ${gridClass} ${gapClass} ${className}`.trim();
+};
+---
+
+<div class={getGridClass()} {...props}>
+  <slot />
+</div>

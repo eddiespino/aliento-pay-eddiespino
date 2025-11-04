@@ -1,0 +1,201 @@
+---
+export interface Props {
+  curationValue: number;
+  dynamicPaymentConfig?: {
+    dynamicReturnPercentage: number;
+  } | null;
+  defaultInterestPercentage: number;
+  onPercentageChange?: (percentage: number) => void;
+}
+
+const { curationValue, dynamicPaymentConfig, defaultInterestPercentage, onPercentageChange } =
+  Astro.props;
+
+// Calcular valores
+const discountPercentage =
+  dynamicPaymentConfig?.dynamicReturnPercentage || defaultInterestPercentage;
+const finalAmount = curationValue * ((100 - discountPercentage) / 100);
+---
+
+<div
+  class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8"
+>
+  <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Parámetros de Cálculo</h3>
+
+  <div
+    class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-green-200 dark:border-green-700"
+  >
+    <div class="text-center">
+      <div class="flex items-center justify-center gap-4 text-lg font-semibold">
+        <!-- Cantidad base -->
+        <div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+          <span class="text-2xl font-bold">
+            {curationValue.toFixed(3)}
+          </span>
+          <span class="text-sm font-medium">HIVE</span>
+        </div>
+
+        <!-- Operador -->
+        <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+          <span class="text-sm">menos</span>
+          <span class="text-xl font-bold">
+            {discountPercentage.toFixed(0)}%
+          </span>
+        </div>
+
+        <!-- Flecha -->
+        <div class="text-gray-500 dark:text-gray-400">→</div>
+
+        <!-- Resultado final -->
+        <div
+          class="flex items-center gap-2 text-green-700 dark:text-green-300 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border-2 border-green-300 dark:border-green-600"
+        >
+          <span class="text-2xl font-bold">
+            {finalAmount.toFixed(3)}
+          </span>
+          <span class="text-sm font-medium">HIVE</span>
+        </div>
+      </div>
+
+      <div class="mt-4 text-sm text-gray-600 dark:text-gray-300">
+        <span class="font-medium">Total final a distribuir entre delegadores</span>
+      </div>
+
+      <!-- Información adicional si es dinámico -->
+      {
+        dynamicPaymentConfig && (
+          <div class="mt-3 text-xs text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
+            </svg>
+            Porcentaje dinámico calculado automáticamente
+          </div>
+        )
+      }
+    </div>
+  </div>
+
+  <!-- Calculadora de porcentaje -->
+  <div class="mt-6 bg-gray-50 dark:bg-gray-900 rounded-xl p-6">
+    <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+      <svg
+        class="w-5 h-5 text-blue-600 dark:text-blue-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+        ></path>
+      </svg>
+      Elige tu % de retorno
+    </h4>
+
+    <div class="space-y-4">
+      <div>
+        <label
+          class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+          for="percentage-slider"
+        >
+          Porcentaje de descuento: <span
+            class="text-blue-600 dark:text-blue-400 font-bold"
+            id="percentage-value">{discountPercentage.toFixed(1)}%</span
+          >
+        </label>
+        <input
+          type="range"
+          id="percentage-slider"
+          min="0"
+          max="50"
+          step="0.1"
+          value={discountPercentage}
+          class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider"
+        />
+        <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mt-1">
+          <span>0%</span>
+          <span>25%</span>
+          <span>50%</span>
+        </div>
+      </div>
+
+      <!-- Resultado actualizado -->
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700"
+      >
+        <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">Nuevo total a distribuir:</div>
+        <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="updated-amount">
+          {finalAmount.toFixed(3)} HIVE
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Funcionalidad del slider
+  const slider = document.getElementById('percentage-slider') as HTMLInputElement;
+  const percentageValue = document.getElementById('percentage-value');
+  const updatedAmount = document.getElementById('updated-amount');
+  const baseCurationValue = parseFloat('{curationValue}') || 0;
+
+  if (slider && percentageValue && updatedAmount) {
+    slider.addEventListener('input', e => {
+      const percentage = parseFloat((e.target as HTMLInputElement).value);
+      const newAmount = baseCurationValue * ((100 - percentage) / 100);
+
+      // Actualizar la UI
+      percentageValue.textContent = percentage.toFixed(1) + '%';
+      updatedAmount.textContent = newAmount.toFixed(3) + ' HIVE';
+
+      // Disparar evento personalizado para actualizar la tabla
+      const event = new CustomEvent('percentageChange', {
+        detail: { percentage, newAmount },
+      });
+      window.dispatchEvent(event);
+    });
+  }
+</script>
+
+<style>
+  /* Estilos para el slider */
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .slider::-webkit-slider-track {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+  }
+
+  .slider::-moz-range-track {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+    border: none;
+  }
+</style>

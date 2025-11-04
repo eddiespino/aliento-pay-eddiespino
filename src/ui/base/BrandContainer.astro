@@ -1,0 +1,42 @@
+---
+// 🏗️ Brand Container Component - Contenedor principal responsivo
+export interface Props {
+  variant?: 'page' | 'center' | 'full';
+  class?: string;
+  withPattern?: boolean;
+}
+
+const { 
+  variant = 'page', 
+  class: className = '', 
+  withPattern = false,
+  ...props 
+} = Astro.props;
+
+const getContainerClass = () => {
+  switch (variant) {
+    case 'center':
+      return `container-brand ${className}`;
+    case 'full':
+      return `w-full ${withPattern ? 'bg-brand-bg relative' : ''} ${className}`;
+    default:
+      return `page-container ${className}`;
+  }
+};
+---
+
+<div class={getContainerClass()} {...props}>
+  {withPattern && variant === 'full' && (
+    <div class="absolute inset-0 opacity-5 pointer-events-none">
+      <div class="absolute inset-0 bg-pattern-dots"></div>
+    </div>
+  )}
+  
+  {variant === 'full' && (
+    <div class="relative z-10">
+      <slot />
+    </div>
+  ) || (
+    <slot />
+  )}
+</div>

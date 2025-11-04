@@ -1,0 +1,97 @@
+---
+export interface Props {
+  filters: {
+    timePeriod: number;
+    minimumHP: number;
+    excludedUsers: string[];
+    curationPeriod: string;
+    curationValue?: number;
+  };
+  filtersSource: string;
+}
+
+const { filters, filtersSource } = Astro.props;
+---
+
+<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    Filtros Aplicados
+  </h3>
+  
+  <!-- Indicador de fuente -->
+  {filtersSource === 'url' && (
+    <div class="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm rounded-full mb-4">
+      🔗 Filtros desde URL
+    </div>
+  )}
+  
+  {filtersSource === 'sessionStorage' && (
+    <div class="inline-flex items-center gap-2 px-3 py-1 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200 text-sm rounded-full mb-4">
+      ✅ Filtros desde sesión anterior
+    </div>
+  )}
+  
+  <!-- Grid de filtros -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <!-- Período de tiempo -->
+    <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+      <div class="text-sm text-blue-600 dark:text-blue-400 font-medium">
+        Período de Tiempo
+      </div>
+      <div class="text-lg font-semibold text-blue-900 dark:text-blue-100">
+        {filters.timePeriod} días
+      </div>
+    </div>
+    
+    <!-- HP Mínimo -->
+    <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+      <div class="text-sm text-purple-600 dark:text-purple-400 font-medium">
+        HP Mínimo
+      </div>
+      <div class="text-lg font-semibold text-purple-900 dark:text-purple-100">
+        {filters.minimumHP} HP
+      </div>
+    </div>
+    
+    <!-- Período de Curación -->
+    <div class="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-lg">
+      <div class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+        Período de Curación
+      </div>
+      <div class="text-lg font-semibold text-emerald-900 dark:text-emerald-100">
+        {filters.curationPeriod}
+      </div>
+      {filters.curationValue && (
+        <div class="text-xs text-emerald-700 dark:text-emerald-300 mt-1">
+          {filters.curationValue.toFixed(4)} HP
+        </div>
+      )}
+    </div>
+    
+    <!-- Usuarios Excluidos -->
+    <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+      <div class="text-sm text-orange-600 dark:text-orange-400 font-medium">
+        Usuarios Excluidos
+      </div>
+      <div class="text-lg font-semibold text-orange-900 dark:text-orange-100">
+        {filters.excludedUsers.length} usuarios
+      </div>
+    </div>
+  </div>
+  
+  <!-- Lista de usuarios excluidos -->
+  {filters.excludedUsers.length > 0 && (
+    <div class="mt-4 p-3 bg-gray-50 dark:bg-gray-900/20 rounded-lg">
+      <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">
+        Usuarios excluidos:
+      </h4>
+      <div class="flex flex-wrap gap-2">
+        {filters.excludedUsers.map((user) => (
+          <span class="px-2 py-1 bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 text-xs rounded">
+            @{user}
+          </span>
+        ))}
+      </div>
+    </div>
+  )}
+</div>

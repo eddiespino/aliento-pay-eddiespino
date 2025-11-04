@@ -1,0 +1,72 @@
+---
+import Skeleton from './Skeleton.astro';
+
+export interface Props {
+  rows?: number;
+  columns?: number;
+  showHeader?: boolean;
+  className?: string;
+}
+
+const { 
+  rows = 5, 
+  columns = 4,
+  showHeader = true,
+  className = ''
+} = Astro.props;
+
+// Generar anchos variables para hacer el skeleton más realista
+function getColumnWidths(colIndex: number) {
+  const widths = ['w-1/4', 'w-1/3', 'w-1/5', 'w-2/5', 'w-1/6'];
+  return widths[colIndex % widths.length] || 'w-1/4';
+}
+---
+
+<div class={`w-full ${className}`}>
+  <!-- Header skeleton -->
+  {showHeader && (
+    <div class="bg-[#18181b] border border-[#232329] rounded-t-xl p-4">
+      <div class="grid gap-4" style={`grid-template-columns: repeat(${columns}, 1fr)`}>
+        {Array.from({ length: columns }).map((_, index) => (
+          <Skeleton height="h-5" width={getColumnWidths(index)} />
+        ))}
+      </div>
+    </div>
+  )}
+  
+  <!-- Rows skeleton -->
+  <div class="bg-[#18181b] border-x border-b border-[#232329] rounded-b-xl">
+    {Array.from({ length: rows }).map((_, rowIndex) => (
+      <div class={`p-4 ${rowIndex < rows - 1 ? 'border-b border-[#232329]' : ''}`}>
+        <div class="grid gap-4" style={`grid-template-columns: repeat(${columns}, 1fr)`}>
+          {Array.from({ length: columns }).map((_, colIndex) => (
+            <div class="flex items-center gap-3">
+              {colIndex === 0 ? (
+                // Primera columna podría tener un avatar
+                <div class="flex items-center gap-3">
+                  <Skeleton variant="circular" height="h-8" width="w-8" />
+                  <Skeleton height="h-4" width={getColumnWidths(colIndex)} />
+                </div>
+              ) : (
+                <Skeleton 
+                  height="h-4" 
+                  width={getColumnWidths(colIndex)}
+                  className={colIndex === columns - 1 ? 'ml-auto' : ''}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    ))}
+  </div>
+  
+  <!-- Loading indicator -->
+  <div class="mt-4 flex justify-center items-center text-gray-400 text-sm">
+    <svg class="animate-spin -ml-1 mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    Cargando datos de delegaciones...
+  </div>
+</div>

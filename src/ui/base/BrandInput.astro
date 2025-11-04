@@ -1,0 +1,91 @@
+---
+// 📝 Brand Input Component - Input del sistema de diseño
+export interface Props {
+  type?: 'text' | 'email' | 'password' | 'number' | 'search';
+  placeholder?: string;
+  value?: string;
+  disabled?: boolean;
+  required?: boolean;
+  icon?: string; // Icon name or SVG
+  label?: string;
+  error?: string;
+  class?: string;
+  id?: string;
+  name?: string;
+}
+
+const { 
+  type = 'text',
+  placeholder = '',
+  value = '',
+  disabled = false,
+  required = false,
+  icon,
+  label,
+  error,
+  class: className = '',
+  id,
+  name,
+  ...props 
+} = Astro.props;
+
+const inputClass = `input-brand ${icon ? 'input-brand-icon' : ''} ${error ? 'border-red-500 focus:ring-red-500/50 focus:border-red-500/50' : ''} ${className}`;
+const inputId = id || name || Math.random().toString(36);
+---
+
+<div class="space-y-2">
+  {label && (
+    <label for={inputId} class="label-brand">
+      {label}
+      {required && <span class="text-red-400 ml-1">*</span>}
+    </label>
+  )}
+  
+  <div class={icon ? 'input-icon-wrapper' : ''}>
+    {icon && (
+      <div class="input-icon">
+        {icon === 'user' && (
+          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+          </svg>
+        )}
+        {icon === 'search' && (
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        )}
+        {icon === 'email' && (
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+          </svg>
+        )}
+        {icon === 'lock' && (
+          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+          </svg>
+        )}
+      </div>
+    )}
+    
+    <input 
+      type={type}
+      id={inputId}
+      name={name}
+      class={inputClass}
+      placeholder={placeholder}
+      value={value}
+      disabled={disabled}
+      required={required}
+      {...props}
+    />
+  </div>
+  
+  {error && (
+    <p class="text-red-400 text-sm flex items-center gap-1">
+      <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+      </svg>
+      {error}
+    </p>
+  )}
+</div>

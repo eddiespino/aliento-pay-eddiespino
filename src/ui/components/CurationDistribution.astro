@@ -1,0 +1,126 @@
+---
+import CurationCalculateTable from "./CurationCalculateTable.astro";
+
+export interface Props {
+  calculationResult?: {
+    delegators: Array<{
+      delegator: string;
+      hiveToReceive: number;
+      // otros campos...
+    }>;
+    totalHP: number;
+    totalHiveToDistribute: number;
+    cutoffDate: string;
+    processedOperations: number;
+  } | null;
+  error?: string | null;
+  filters: {
+    curationPeriod: string;
+    // otros campos necesarios para el enlace de pagos
+  };
+}
+
+const { calculationResult, error, filters } = Astro.props;
+---
+
+<!-- Mensajes de estado -->
+{error && (
+  <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-8">
+    <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+    <p class="text-sm text-red-700 dark:text-red-300 mt-1">{error}</p>
+  </div>
+)}
+
+<!-- Tabla de resultados -->
+{!error && (
+  <CurationCalculateTable
+    delegators={calculationResult?.delegators || []}
+    totalHP={calculationResult?.totalHP || 0}
+    totalHiveToDistribute={calculationResult?.totalHiveToDistribute || 0}
+    isLoading={false}
+  />
+)}
+
+<!-- Información del cálculo -->
+{calculationResult && (
+  <div class="mt-8 bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      Información del Cálculo
+    </h3>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+      <div>
+        <span class="text-gray-600 dark:text-gray-400">Fecha de Corte:</span>
+        <span class="ml-2 font-medium text-gray-900 dark:text-white">
+          {new Date(calculationResult.cutoffDate).toLocaleDateString("es-ES")}
+        </span>
+      </div>
+      <div>
+        <span class="text-gray-600 dark:text-gray-400">Operaciones Procesadas:</span>
+        <span class="ml-2 font-medium text-gray-900 dark:text-white">
+          {calculationResult.processedOperations.toLocaleString()}
+        </span>
+      </div>
+      <div>
+        <span class="text-gray-600 dark:text-gray-400">Delegadores Válidos:</span>
+        <span class="ml-2 font-medium text-gray-900 dark:text-white">
+          {calculationResult.delegators.length}
+        </span>
+      </div>
+    </div>
+  </div>
+)}
+
+<!-- Botón de proceder a pagos -->
+{calculationResult && !error && (
+  <div class="mt-8 text-center">
+    <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-8 shadow-xl">
+      <div class="text-white mb-6">
+        <h3 class="text-2xl font-bold mb-2">¡Cálculo Completado!</h3>
+        <p class="text-green-100 text-lg">
+          Distribución lista para {calculationResult.delegators.length} delegadores
+        </p>
+        
+        <!-- Estadísticas resumen -->
+        <div class="flex justify-center items-center gap-8 mt-4 flex-wrap">
+          <div class="text-center bg-white/10 rounded-xl p-4 min-w-[140px]">
+            <div class="text-3xl font-bold">
+              {calculationResult.totalHP.toFixed(0)}
+            </div>
+            <div class="text-green-100 text-sm font-medium">HP Total</div>
+          </div>
+          <div class="text-center bg-white/10 rounded-xl p-4 min-w-[140px]">
+            <div class="text-3xl font-bold">
+              {calculationResult.totalHiveToDistribute.toFixed(3)}
+            </div>
+            <div class="text-green-100 text-sm font-medium">HIVE a Distribuir</div>
+          </div>
+          <div class="text-center bg-white/10 rounded-xl p-4 min-w-[140px]">
+            <div class="text-3xl font-bold">
+              {calculationResult.delegators.length}
+            </div>
+            <div class="text-green-100 text-sm font-medium">Delegadores</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Botón de acción -->
+      <a
+        href={`/payments?data=${encodeURIComponent(JSON.stringify({
+          distributions: calculationResult.delegators.map(d => ({
+            username: d.delegator,
+            payment: d.hiveToReceive
+          })),
+          period: filters.curationPeriod,
+          totalAmount: calculationResult.totalHiveToDistribute
+        }))}`}
+        class="inline-flex items-center gap-3 bg-white text-green-600 font-bold text-lg px-8 py-4 rounded-xl hover:bg-green-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+      >
+        💰 PROCEDER A PAGOS →
+      </a>
+      
+      <p class="text-green-100 text-sm mt-4">
+        Continuar para configurar y ejecutar los pagos via Hive Keychain
+      </p>
+    </div>
+  </div>
+)}

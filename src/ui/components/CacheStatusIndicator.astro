@@ -1,0 +1,171 @@
+---
+// Componente para mostrar el estado del caché del Dashboard
+---
+
+<div id="cache-status-indicator" class="hidden fixed bottom-4 right-4 z-50">
+  <div
+    class="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-3 text-sm"
+  >
+    <div class="flex items-center gap-2">
+      <div id="cache-status-icon" class="w-3 h-3 rounded-full bg-gray-400"></div>
+      <span id="cache-status-text" class="text-gray-600 dark:text-gray-300">...</span>
+    </div>
+    <div id="cache-status-details" class="text-xs text-gray-500 dark:text-gray-400 mt-1 hidden">
+      <div>Curation: <span id="curation-cache-age">--</span></div>
+      <div>Last update: <span id="last-update-age">--</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  <
+    script // @ts-nocheck
+  >(function () {
+    'use strict';
+
+    let statusIndicator = null;
+    let statusIcon = null;
+    let statusText = null;
+    let statusDetails = null;
+    let curationAgeSpan = null;
+    let lastUpdateAgeSpan = null;
+
+    function initializeElements() {
+      statusIndicator = document.getElementById('cache-status-indicator');
+      statusIcon = document.getElementById('cache-status-icon');
+      statusText = document.getElementById('cache-status-text');
+      statusDetails = document.getElementById('cache-status-details');
+      curationAgeSpan = document.getElementById('curation-cache-age');
+      lastUpdateAgeSpan = document.getElementById('last-update-age');
+    }
+
+    function updateCacheStatus() {
+      if (!statusIndicator) return;
+
+      try {
+        // Obtener información del caché
+        const cacheInfo =
+          typeof window.getDashboardCacheInfo === 'function'
+            ? window.getDashboardCacheInfo()
+            : null;
+
+        if (!cacheInfo) {
+          showStatus('unknown', 'Estado del caché desconocido');
+          return;
+        }
+
+        const { hasCurationData, curationAge, lastUpdate, needsUpdate } = cacheInfo;
+
+        // ✅ VERIFICAR SI HAY ACTUALIZACIÓN EN PROGRESO
+        const isRefreshingCuration = (window as any).isRefreshingCurationStats === true;
+        const isUpdatingDashboard = (window as any).isUpdatingDashboardData === true;
+        const isUpdating = isRefreshingCuration || isUpdatingDashboard;
+
+        if (isUpdating) {
+          showStatus('updating', 'Actualizando datos...');
+        } else if (needsUpdate) {
+          // Si needsUpdate es true pero no hay actualización en progreso,
+          // significa que los datos están disponibles pero podrían necesitar actualización
+          showStatus('loaded', 'Datos cargados');
+        } else if (hasCurationData && curationAge !== null) {
+          const ageMinutes = Math.round(curationAge / (1000 * 60));
+          showStatus('fresh', `Datos actualizados (${ageMinutes}m)`);
+
+          // Mostrar detalles
+          if (curationAgeSpan) {
+            curationAgeSpan.textContent = `${ageMinutes}m`;
+          }
+
+          if (lastUpdateAgeSpan && lastUpdate) {
+            const lastUpdateMinutes = Math.round((Date.now() - lastUpdate) / (1000 * 60));
+            lastUpdateAgeSpan.textContent = `${lastUpdateMinutes}m`;
+          }
+        } else {
+          showStatus('stale', 'Sin datos de caché');
+        }
+      } catch (err) {
+        console.warn('⚠️ Error actualizando estado del caché:', err);
+        showStatus('error', 'Error verificando caché');
+      }
+    }
+
+    function showStatus(status: string, text: string) {
+      if (!statusIcon || !statusText || !statusIndicator) return;
+
+      // Actualizar texto
+      statusText.textContent = text;
+
+      // Actualizar color del indicador
+      statusIcon.className = 'w-3 h-3 rounded-full';
+
+      switch (status) {
+        case 'fresh':
+          statusIcon.classList.add('bg-green-500');
+          break;
+        case 'loaded':
+          statusIcon.classList.add('bg-blue-500');
+          break;
+        case 'updating':
+          statusIcon.classList.add('bg-yellow-500', 'animate-pulse');
+          break;
+        case 'stale':
+          statusIcon.classList.add('bg-orange-500');
+          break;
+        case 'error':
+          statusIcon.classList.add('bg-red-500');
+          break;
+        default:
+          statusIcon.classList.add('bg-gray-400');
+      }
+
+      // Mostrar el indicador
+      statusIndicator.classList.remove('hidden');
+
+      // Auto-ocultar después de 5 segundos para estados normales
+      if (status === 'fresh' || status === 'loaded') {
+        setTimeout(() => {
+          if (statusIndicator) {
+            statusIndicator.classList.add('hidden');
+          }
+        }, 5000);
+      }
+    }
+
+    function toggleDetails() {
+      if (statusDetails) {
+        statusDetails.classList.toggle('hidden');
+      }
+    }
+
+    // Inicializar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', function () {
+      initializeElements();
+
+      // Actualizar estado inicial
+      setTimeout(updateCacheStatus, 1000);
+
+      // Configurar click para mostrar/ocultar detalles
+      if (statusIndicator) {
+        statusIndicator.addEventListener('click', toggleDetails);
+      }
+    });
+
+    // Listener para actualizaciones de curación
+    document.addEventListener('curation-stats-updated', function () {
+      console.log('📊 Estadísticas de curación actualizadas, refrescando indicador');
+      // Forzar refresco inmediato para que se refleje el nuevo estado
+      setTimeout(updateCacheStatus, 100);
+    });
+
+    // Listener para cuando el dashboard se actualiza
+    document.addEventListener('dashboard-data-updated', function () {
+      console.log('🔄 Dashboard actualizado, refrescando indicador');
+      setTimeout(updateCacheStatus, 100);
+    });
+
+    // Actualizar periódicamente
+    setInterval(updateCacheStatus, 30000); // Cada 30 segundos
+
+    console.log('✅ Cache Status Indicator: Configurado');
+  })();
+</script>

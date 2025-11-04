@@ -1,0 +1,294 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🎨 DESIGN SYSTEM COMPONENTS - Basado en el login exitoso */
+@layer components {
+  /* 🏗️ LAYOUT COMPONENTS */
+  .container-brand {
+    @apply min-h-screen flex items-center justify-center p-4 relative;
+  }
+  
+  .page-container {
+    @apply w-full max-w-6xl mx-auto px-4 md:px-6 lg:px-8 relative z-10;
+  }
+  
+  /* 🧭 NAVIGATION COMPONENTS */
+  .nav-brand {
+    @apply fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-brand-slate-900/20 border-b border-brand-slate-700/30;
+  }
+  
+  .nav-brand::before {
+    @apply absolute inset-0 bg-gradient-to-r from-brand-slate-900/10 via-brand-slate-800/10 to-brand-slate-900/10;
+    content: '';
+    backdrop-filter: blur(20px);
+  }
+  
+  .nav-content {
+    @apply relative z-10 max-w-6xl mx-auto px-4 md:px-6 lg:px-8 py-4 flex items-center justify-between;
+  }
+  
+  .nav-logo {
+    @apply flex items-center gap-3 text-xl font-bold text-brand-gradient;
+  }
+  
+  .nav-links {
+    @apply hidden md:flex items-center gap-6;
+  }
+  
+  .nav-link {
+    @apply text-brand-slate-300 hover:text-white transition-colors duration-200 text-sm font-medium;
+  }
+  
+  .nav-user {
+    @apply flex items-center gap-4;
+  }
+  
+  .nav-avatar {
+    @apply w-8 h-8 rounded-full bg-brand-gradient flex items-center justify-center text-white font-semibold text-sm;
+  }
+  
+  /* Space for fixed nav */
+  .main-content {
+    @apply pt-20;
+  }
+  
+  /* 🃏 CARD COMPONENTS */
+  .card-brand {
+    @apply relative bg-brand-slate-900/90 backdrop-blur-xl rounded-2xl border border-brand-slate-700/50 shadow-brand-xl;
+  }
+  
+  .card-brand::before {
+    @apply absolute -inset-1 bg-brand-glow rounded-3xl blur-xl opacity-75 animate-glow pointer-events-none;
+    content: '';
+    z-index: -1;
+  }
+  
+  .card-brand-simple {
+    @apply bg-brand-slate-800/50 backdrop-blur-md rounded-xl border border-brand-slate-600/50 shadow-brand;
+  }
+  
+  .card-brand-glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-brand-lg;
+  }
+  
+  /* 🔘 BUTTON COMPONENTS */
+  .btn-brand {
+    @apply w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-xl text-sm font-medium text-white bg-brand-gradient hover:bg-brand-gradient-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-sky-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none;
+  }
+  
+  .btn-brand-secondary {
+    @apply w-full flex justify-center items-center gap-2 py-3 px-4 border border-brand-slate-600 rounded-xl text-sm font-medium text-brand-slate-200 bg-brand-slate-800/50 hover:bg-brand-slate-700/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-slate-500 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] backdrop-blur-sm;
+  }
+  
+  .btn-brand-ghost {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-slate-300 hover:text-white transition-colors duration-200;
+  }
+  
+  /* 📝 INPUT COMPONENTS */
+  .input-brand {
+    @apply block w-full px-4 py-3 bg-brand-slate-800/50 border border-brand-slate-600/50 rounded-xl text-white placeholder-brand-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-sky-500/50 focus:border-brand-sky-500/50 transition-all duration-200 backdrop-blur-sm;
+  }
+  
+  .input-brand-icon {
+    @apply pl-10;
+  }
+  
+  .input-icon-wrapper {
+    @apply relative;
+  }
+  
+  .input-icon {
+    @apply absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-brand-slate-400;
+  }
+  
+  /* 🏷️ LABEL COMPONENTS */
+  .label-brand {
+    @apply block text-sm font-medium text-brand-slate-300 mb-2;
+  }
+  
+  /* 📊 GRID COMPONENTS */
+  .grid-brand {
+    @apply grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+  
+  .grid-brand-auto {
+    @apply grid gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  
+  /* ⏳ LOADING COMPONENTS */
+  .loading-step {
+    @apply flex items-center gap-3 p-4 rounded-xl bg-brand-slate-800/30 border border-brand-slate-700/50 opacity-50 transition-all duration-300;
+  }
+  
+  .loading-step.active {
+    @apply opacity-100 border-brand-sky-500 bg-brand-sky-900/20;
+  }
+  
+  .loading-step.completed {
+    @apply opacity-100 border-brand-emerald-500 bg-brand-emerald-900/20;
+  }
+  
+  .loading-icon {
+    @apply h-6 w-6 rounded-full bg-brand-slate-600 flex items-center justify-center;
+  }
+  
+  .loading-icon.active {
+    @apply bg-transparent;
+  }
+  
+  /* 🚨 ALERT COMPONENTS */
+  .alert-brand {
+    @apply p-4 rounded-xl backdrop-blur-sm border;
+  }
+  
+  .alert-brand.error {
+    @apply bg-red-500/10 border-red-500/20 text-red-300;
+  }
+  
+  .alert-brand.success {
+    @apply bg-brand-emerald-500/10 border-brand-emerald-500/20 text-brand-emerald-300;
+  }
+  
+  .alert-brand.warning {
+    @apply bg-yellow-500/10 border-yellow-500/20 text-yellow-300;
+  }
+  
+  .alert-brand.info {
+    @apply bg-brand-sky-500/10 border-brand-sky-500/20 text-brand-sky-300;
+  }
+  
+  /* 🎯 HEADER COMPONENTS */
+  .header-brand {
+    @apply text-center space-y-4 mb-8;
+  }
+  
+  .logo-brand {
+    @apply mx-auto w-16 h-16 bg-brand-gradient rounded-2xl flex items-center justify-center shadow-glow-sm;
+  }
+  
+  .title-brand {
+    @apply text-3xl font-bold bg-gradient-to-r from-white via-brand-slate-200 to-brand-slate-300 bg-clip-text text-transparent;
+  }
+  
+  .subtitle-brand {
+    @apply text-brand-slate-400 text-sm font-medium;
+  }
+}
+
+/* 🔧 UTILITY CLASSES */
+@layer utilities {
+  /* Text gradients */
+  .text-brand-gradient {
+    @apply bg-gradient-to-r from-white via-brand-slate-200 to-brand-slate-300 bg-clip-text text-transparent;
+  }
+  
+  .text-brand-gradient-primary {
+    @apply bg-brand-gradient bg-clip-text text-transparent;
+  }
+  
+  /* Glassmorphism effects */
+  .glass-brand {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+  }
+  
+  .glass-brand-dark {
+    @apply backdrop-blur-xl bg-brand-slate-900/20 border border-brand-slate-700/30;
+  }
+  
+  /* Hover effects */
+  .hover-lift {
+    @apply transition-transform duration-200 hover:scale-[1.02] active:scale-[0.98];
+  }
+  
+  .hover-glow {
+    @apply transition-shadow duration-300 hover:shadow-glow-md;
+  }
+  
+  .hover-float {
+    @apply transition-transform duration-300 hover:animate-float;
+  }
+  
+  /* Focus effects */
+  .focus-brand {
+    @apply focus:outline-none focus:ring-2 focus:ring-brand-sky-500/50 focus:border-brand-sky-500/50;
+  }
+  
+  /* Background patterns */
+  .bg-pattern-dots {
+    background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0);
+    background-size: 40px 40px;
+  }
+  
+  .bg-pattern-grid {
+    background-image: 
+      linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  
+  /* Scrollbar styling */
+  .scrollbar-brand {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(71 85 105) rgb(15 23 42);
+  }
+  
+  .scrollbar-brand::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-brand::-webkit-scrollbar-track {
+    background: rgb(15 23 42);
+  }
+  
+  .scrollbar-brand::-webkit-scrollbar-thumb {
+    background: rgb(71 85 105);
+    border-radius: 3px;
+  }
+  
+  .scrollbar-brand::-webkit-scrollbar-thumb:hover {
+    background: rgb(100 116 139);
+  }
+  
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+  }
+}
+
+/* 🎬 ADDITIONAL KEYFRAMES */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.95); 
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1); 
+  }
+}

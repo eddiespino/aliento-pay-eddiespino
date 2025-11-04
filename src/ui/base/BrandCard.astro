@@ -1,0 +1,26 @@
+---
+// 🃏 Brand Card Component - Card principal del sistema de diseño
+export interface Props {
+  variant?: 'default' | 'simple' | 'glass';
+  class?: string;
+  withGlow?: boolean;
+}
+
+const { 
+  variant = 'default', 
+  class: className = '', 
+  withGlow = true,
+  ...props 
+} = Astro.props;
+
+const getCardClass = () => {
+  const baseClass = variant === 'simple' ? 'card-brand-simple' : 
+                   variant === 'glass' ? 'card-brand-glass' : 'card-brand';
+  
+  return `${baseClass} ${!withGlow && variant === 'default' ? '[&::before]:hidden' : ''} ${className}`;
+};
+---
+
+<div class={getCardClass()} {...props}>
+  <slot />
+</div>

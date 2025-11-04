@@ -1,0 +1,225 @@
+---
+import type { Payment } from '@/domain/models/Payment';
+
+export interface Props {
+  payments: Payment[];
+}
+
+const { payments } = Astro.props;
+---
+
+<div class="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-600/30 rounded-xl p-6">
+  <div class="flex items-center justify-between mb-6">
+    <h3 class="text-xl font-bold text-white flex items-center gap-2">
+      <svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+        <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
+      </svg>
+      Lista de Pagos
+    </h3>
+    <div class="text-sm text-gray-400">
+      {payments.length} transferencias
+    </div>
+  </div>
+
+  <div class="max-h-96 overflow-y-auto space-y-2">
+    {payments.map((payment, index) => (
+      <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50 hover:bg-gray-700/50 transition-colors">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="relative w-8 h-8" data-username={payment.to}>
+              <!-- Fallback avatar with number -->
+              <div class="avatar-fallback w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
+                <span class="text-blue-400 text-sm font-bold">{index + 1}</span>
+              </div>
+              <!-- Container for real avatar image -->
+              <div class="avatar-img absolute inset-0"></div>
+            </div>
+            <div>
+              <div class="font-medium text-white">@{payment.to}</div>
+              <div class="text-xs text-gray-400 truncate max-w-xs">
+                {payment.memo}
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold text-yellow-400">{payment.amount} HIVE</div>
+            <div class="text-xs text-gray-400 capitalize">
+              {payment.status || 'pendiente'}
+            </div>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {payments.length === 0 && (
+    <div class="text-center py-8">
+      <div class="w-16 h-16 bg-gray-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+      </div>
+      <h4 class="text-lg font-medium text-gray-300 mb-2">Sin Pagos</h4>
+      <p class="text-gray-400 text-sm">No hay pagos para mostrar en la lista</p>
+    </div>
+  )}
+</div>
+
+<script>
+
+  // 🧪 Función de test para verificar URLs de avatar
+  function testPaymentAvatarUrls() {
+    const testUsernames = ['@aliento', 'aliento', '@hispapro', 'hispapro'];
+    console.log('🧪 PaymentsList: Testing avatar URLs:');
+    testUsernames.forEach(username => {
+      const normalized = username.replace('@', '').trim().toLowerCase();
+      const avatarUrl = `https://images.hive.blog/u/${normalized}/avatar`;
+      console.log(`  ${username} -> ${avatarUrl}`);
+    });
+  }
+
+  // ✅ Carga directa de avatares sin cache (SIMPLIFICADO)
+  function loadPaymentAvatarsDirectSimple() {
+    console.log('🖼️ PaymentsList: Iniciando carga directa de avatares...');
+    
+    // Ejecutar test de URLs
+    testPaymentAvatarUrls();
+    
+    // Verificar que estamos en una página con PaymentsList
+    if (!isOnPaymentsPage()) {
+      console.log('ℹ️ PaymentsList: No estamos en una página con pagos');
+      return;
+    }
+    
+    // Obtener todos los contenedores de avatar
+    const avatarContainers = document.querySelectorAll('[data-username]');
+    
+    console.log(`🔍 PaymentsList: Encontrados ${avatarContainers.length} contenedores de avatar`);
+    
+    if (avatarContainers.length === 0) {
+      console.log('ℹ️ PaymentsList: No se encontraron avatares para cargar - reintentando...');
+      setTimeout(loadPaymentAvatarsDirectSimple, 1000);
+      return;
+    }
+    
+    // Procesar cada contenedor
+    avatarContainers.forEach((container, index) => {
+      const username = container.getAttribute('data-username');
+      if (!username) return;
+      
+      const avatarContainer = container.querySelector('.avatar-img');
+      const fallback = container.querySelector('.avatar-fallback');
+      
+      if (!avatarContainer || !fallback) {
+        console.warn(`⚠️ PaymentsList: No se encontraron contenedores para @${username}`);
+        return;
+      }
+      
+      // Verificar si ya tiene avatar cargado
+      if (avatarContainer.querySelector('img')) {
+        console.log(`✅ PaymentsList: Avatar ya cargado para @${username}`);
+        return;
+      }
+      
+      console.log(`🔄 PaymentsList: Cargando avatar para @${username}...`);
+      
+      // Crear imagen directamente (remover @ si existe)
+      const normalized = username.replace('@', '').trim().toLowerCase();
+      const avatarUrl = `https://images.hive.blog/u/${normalized}/avatar`;
+      
+      console.log(`🔗 PaymentsList: URL de avatar para @${username}: ${avatarUrl}`);
+      
+      const img = document.createElement('img');
+      img.src = avatarUrl;
+      img.alt = `@${username}`;
+      img.className = 'w-8 h-8 rounded-full object-cover';
+      
+      // Manejar carga exitosa
+      img.onload = function() {
+        avatarContainer.appendChild(img);
+        // Para PaymentsList, hacemos overlay en lugar de ocultar fallback
+        fallback.style.opacity = '0.3';
+        console.log(`✅ PaymentsList: Avatar cargado exitosamente para @${username}`);
+      };
+      
+      // Manejar error de carga
+      img.onerror = function() {
+        console.log(`⚠️ PaymentsList: Error cargando avatar para @${username}, manteniendo fallback`);
+      };
+    });
+    
+    console.log(`✅ PaymentsList: Proceso de carga de avatares iniciado para ${avatarContainers.length} usuarios`);
+  }
+
+  // Función para verificar si estamos en una página con PaymentsList
+  function isOnPaymentsPage() {
+    return window.location.pathname.includes('/calculate') || 
+           window.location.pathname.includes('/payments');
+  }
+
+
+  // Inicializar avatares con método directo y simple
+  
+  // 1. Inmediatamente después del DOM
+  setTimeout(loadPaymentAvatarsDirectSimple, 100);
+  
+  // 2. Cuando el DOM esté listo
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(loadPaymentAvatarsDirectSimple, 200);
+  });
+  
+  // 3. Después de que todo esté cargado
+  window.addEventListener('load', () => {
+    setTimeout(loadPaymentAvatarsDirectSimple, 400);
+  });
+  
+  // 4. Reintento después de 2 segundos
+  setTimeout(loadPaymentAvatarsDirectSimple, 2000);
+  
+  // 5. Último intento después de 5 segundos
+  setTimeout(loadPaymentAvatarsDirectSimple, 5000);
+  
+  // 6. Escuchar eventos específicos de la aplicación
+  window.addEventListener('payments:updated', () => {
+    setTimeout(loadPaymentAvatarsDirectSimple, 100);
+  });
+  
+  // 7. Escuchar cambios de navegación (para SPAs)
+  window.addEventListener('astro:page-load', () => {
+    setTimeout(loadPaymentAvatarsDirectSimple, 200);
+  });
+  
+  // 8. Observer para detectar cuando aparezcan elementos con data-username
+  const paymentObserver = new MutationObserver((mutations) => {
+    let hasNewPayments = false;
+    mutations.forEach((mutation) => {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as Element;
+            if (element.getAttribute && element.getAttribute('data-username')) {
+              hasNewPayments = true;
+            }
+            // También verificar descendientes
+            const descendantsWithUsername = element.querySelectorAll('[data-username]');
+            if (descendantsWithUsername.length > 0) {
+              hasNewPayments = true;
+            }
+          }
+        });
+      }
+    });
+    
+    if (hasNewPayments) {
+      console.log('🔄 PaymentsList: Detectados nuevos elementos de pago, cargando avatares...');
+      setTimeout(loadPaymentAvatarsDirectSimple, 100);
+    }
+  });
+  
+  // Observar cambios en el documento
+  paymentObserver.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+</script>

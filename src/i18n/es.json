@@ -1,0 +1,61 @@
+{
+  "calculate": {
+    "title": "Calcular Distribución de Curación - Aliento",
+    "description": "Calcula la distribución de recompensas de curación entre delegadores basada en filtros específicos.",
+    "pageTitle": "Calcular Distribución de Curación",
+    "pageSubtitle": "Distribución de recompensas entre delegadores de @aliento",
+    "backToDashboard": "← Volver al Dashboard",
+    "currentPage": "Calcular Distribución"
+  },
+  "filters": {
+    "title": "Filtros Aplicados",
+    "timePeriod": "Período de Tiempo",
+    "minimumHP": "HP Mínimo",
+    "excludedUsers": "Usuarios Excluidos",
+    "days": "días",
+    "users": "usuarios"
+  },
+  "calculation": {
+    "title": "Parámetros de Cálculo",
+    "hivePowerToConsider": "HivePower a Considerar",
+    "interestPercentage": "Porcentaje de Interés"
+  },
+  "messages": {
+    "error": "Error",
+    "defaultFiltersTitle": "Usando filtros por defecto",
+    "defaultFiltersDescription": "Se están aplicando filtros por defecto para mostrar la distribución de curación. Para personalizar los filtros, usa el dashboard.",
+    "customizeFilters": "Personalizar Filtros"
+  },
+  "table": {
+    "title": "Distribución de Curación",
+    "validDelegators": "delegadores válidos",
+    "totalHP": "Total HP",
+    "totalHive": "Total Hive",
+    "calculating": "Calculando distribución...",
+    "noDelegators": "No hay delegadores que cumplan los criterios especificados",
+    "headers": {
+      "delegator": "Delegador",
+      "delegatedHP": "HP Delegado",
+      "participation": "Participación",
+      "hiveToReceive": "Hive a Recibir",
+      "delegationDate": "Fecha Delegación"
+    },
+    "footer": {
+      "showing": "Mostrando",
+      "delegatedHP": "HP Delegado",
+      "hiveToReceive": "Hive a Recibir"
+    }
+  },
+  "calculationInfo": {
+    "title": "Información del Cálculo",
+    "cutoffDate": "Fecha de Corte",
+    "processedOperations": "Operaciones Procesadas",
+    "validDelegators": "Delegadores Válidos"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "block": "Bloque",
+    "of": "de"
+  }
+}
