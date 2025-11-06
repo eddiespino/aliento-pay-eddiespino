@@ -1,30 +1,160 @@
 {
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "block": "Block",
+    "of": "of",
+    "save": "Save",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "next": "Next",
+    "back": "Back",
+    "refresh": "Refresh",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "language": {
+    "switcher": "Language",
+    "english": "English",
+    "spanish": "Spanish",
+    "switchTo": "Switch to"
+  },
+  "header": {
+    "logout": "Logout",
+    "welcome": "Welcome",
+    "profile": "Profile"
+  },
+  "login": {
+    "title": "Aliento.pay - Hive Curation Rewards",
+    "subtitle": "Connect with your Hive Keychain wallet",
+    "hiveUsername": "Hive Username",
+    "usernamePlaceholder": "yourusername",
+    "connectButton": "Connect with Hive Keychain",
+    "connecting": "Connecting...",
+    "noKeychain": "Don't have Hive Keychain?",
+    "downloadExtension": "Download Extension",
+    "whatIsKeychain": "What is Hive Keychain?",
+    "keychainDesc": "Hive Keychain is a secure wallet for Hive blockchain that allows you to sign transactions securely from your browser.",
+    "loadingSteps": {
+      "verifying": "Verifying credentials",
+      "preparing": "Preparing session",
+      "redirecting": "Redirecting to dashboard"
+    },
+    "errors": {
+      "keychainNotFound": "Hive Keychain extension not detected. Please install it to continue.",
+      "keychainRejected": "Authentication rejected. Please try again.",
+      "usernameRequired": "Username is required",
+      "invalidUsername": "Invalid username format",
+      "connectionFailed": "Connection failed. Please try again."
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard - Aliento.pay",
+    "pageTitle": "Curation Dashboard",
+    "welcome": "Welcome back",
+    "delegators": "Delegators",
+    "totalHP": "Total HP",
+    "activeFilters": "Active Filters",
+    "noFilters": "No filters applied",
+    "curationStats": {
+      "title": "Curation Statistics",
+      "last24h": "Last 24 hours",
+      "last7d": "Last 7 days",
+      "last30d": "Last 30 days",
+      "hiveEarned": "HIVE earned from curation"
+    }
+  },
+  "filters": {
+    "title": "Applied Filters",
+    "curationPeriod": "Curation Period",
+    "timePeriod": "Time Period",
+    "minimumHP": "Minimum HP",
+    "excludedUsers": "Excluded Users",
+    "excludedUsersList": "Excluded users:",
+    "days": "days",
+    "users": "users",
+    "applyFilters": "Apply Filters",
+    "resetFilters": "Reset Filters",
+    "nextStep": "Next: Calculate Distribution",
+    "filtersLocked": "Filters locked",
+    "editFilters": "Edit Filters",
+    "selectPeriod": "Select curation period",
+    "selectTimePeriod": "Days to consider",
+    "setMinimumHP": "Minimum HP required",
+    "addExcludedUser": "Add username to exclude",
+    "excludedUserPlaceholder": "username",
+    "removeUser": "Remove",
+    "noExcludedUsers": "No excluded users",
+    "custom": "Custom",
+    "loadingStats": "Loading stats...",
+    "fromURL": "Filters from URL"
+  },
+  "delegations": {
+    "title": "Current Delegations",
+    "loading": "Loading delegations...",
+    "noDelegations": "No delegations found",
+    "refresh": "Refresh",
+    "lastUpdate": "Last update",
+    "table": {
+      "delegator": "Delegator",
+      "hp": "Hive Power",
+      "percentage": "Share",
+      "date": "Delegation Date"
+    }
+  },
   "calculate": {
     "title": "Calculate Curation Distribution - Aliento",
     "description": "Calculate the distribution of curation rewards among delegators based on specific filters.",
     "pageTitle": "Calculate Curation Distribution",
-    "pageSubtitle": "Distribution of rewards among @aliento delegators",
+    "pageSubtitle": "Distribution of rewards among delegators",
+    "pageSubtitleFor": "Distribution of rewards among delegators of @{user}",
     "backToDashboard": "← Back to Dashboard",
-    "currentPage": "Calculate Distribution"
-  },
-  "filters": {
-    "title": "Applied Filters",
-    "timePeriod": "Time Period",
-    "minimumHP": "Minimum HP",
-    "excludedUsers": "Excluded Users",
-    "days": "days",
-    "users": "users"
+    "currentPage": "Calculate Distribution",
+    "processingFilters": "Processing filters...",
+    "verifyingFilters": "Verifying if filters are applied in URL or session.",
+    "calculatingDistribution": "Calculating distribution...",
+    "processingData": "Processing delegation data and calculating rewards.",
+    "completedTitle": "Calculation Completed!",
+    "completedMessage": "Distribution ready for {count} delegators",
+    "proceedToPayments": "PROCEED TO PAYMENTS →",
+    "continueToPayments": "Continue to configure and execute payments via Hive Keychain",
+    "loadingAppliedFilters": "Loading applied filters",
+    "fetchingCurationData": "Fetching curation data",
+    "calculatingDistributionStep": "Calculating distribution",
+    "fastNavigationActive": "Fast navigation active",
+    "processingFromDashboard": "Processing from Dashboard..."
   },
   "calculation": {
     "title": "Calculation Parameters",
     "hivePowerToConsider": "HivePower to Consider",
-    "interestPercentage": "Interest Percentage"
+    "interestPercentage": "Return Percentage",
+    "discountPercentage": "Discount percentage",
+    "baseAmount": "Base amount",
+    "finalAmount": "Final amount to distribute among delegators",
+    "choosePercentage": "Choose your return %",
+    "subtractUserHP": "Subtract my HP percentage from total",
+    "subtractUserHPDesc": "Your HP percentage will be automatically subtracted from the total to distribute",
+    "yourHPPercentage": "Your HP percentage",
+    "calculating": "Calculating...",
+    "calculatingPercentage": "Calculating percentage...",
+    "userNotFound": "User not found",
+    "errorCalculatingPercentage": "Error calculating percentage",
+    "newTotal": "New total to distribute",
+    "dynamicPercentage": "Dynamic percentages calculated automatically",
+    "minus": "minus"
   },
   "messages": {
     "error": "Error",
     "defaultFiltersTitle": "Using default filters",
     "defaultFiltersDescription": "Default filters are being applied to show the curation distribution. To customize filters, use the dashboard.",
-    "customizeFilters": "Customize Filters"
+    "customizeFilters": "Customize Filters",
+    "noFiltersFound": "No filters found. Please return to dashboard to configure filters.",
+    "returnToDashboard": "Return to Dashboard",
+    "dataProcessed": "Data processed successfully",
+    "errorLoadingData": "Error loading data. Please try again."
   },
   "table": {
     "title": "Curation Distribution",
@@ -33,6 +163,8 @@
     "totalHive": "Total Hive",
     "calculating": "Calculating distribution...",
     "noDelegators": "No delegators meet the specified criteria",
+    "showing": "Showing",
+    "ofTotal": "of",
     "headers": {
       "delegator": "Delegator",
       "delegatedHP": "Delegated HP",
@@ -52,10 +184,101 @@
     "processedOperations": "Processed Operations",
     "validDelegators": "Valid Delegators"
   },
-  "common": {
-    "loading": "Loading...",
-    "error": "Error",
-    "block": "Block",
-    "of": "of"
+  "memo": {
+    "title": "Customize Payment Memo",
+    "description": "Edit the message that will appear in each transfer. You can use variables:",
+    "templateLabel": "Memo Template:",
+    "templatePlaceholder": "Enter your custom memo...",
+    "apply": "Apply",
+    "quickTemplates": "Quick Templates:",
+    "preview": "Preview (first payment):",
+    "noPreview": "No payments to preview",
+    "variables": {
+      "period": "Payment period",
+      "username": "Recipient username",
+      "amount": "Payment amount",
+      "date": "Current date"
+    },
+    "templates": {
+      "default": "Default",
+      "withEmoji": "With emoji",
+      "detailed": "Detailed",
+      "simple": "Simple"
+    },
+    "defaults": {
+      "basic": "Curation payment {period} - Aliento.pay",
+      "emoji": "Curation reward {period} for @{username} 🌱",
+      "detailed": "Curation {period} - {amount} HIVE - {date}",
+      "simple": "Thanks for your delegation {period} - @aliento"
+    },
+    "saveAsDefault": "Save as default",
+    "resetToDefault": "Reset to default"
+  },
+  "payments": {
+    "title": "Execute Payments - Aliento.pay",
+    "pageTitle": "Execute Payments",
+    "heroDescription": "Review the distribution and execute curation payments securely using",
+    "loadingPayments": "Loading Payments...",
+    "processingData": "Processing distribution data...",
+    "paymentList": "Payment List",
+    "transfers": "transfers",
+    "totalPayments": "Total Payments",
+    "totalAmount": "Total Amount",
+    "activeUser": "Active User",
+    "notConnected": "Not connected",
+    "refresh": "Refresh",
+    "noPayments": "No payments data. Please return and recalculate distribution.",
+    "goToCalculate": "Go to calculate distribution",
+    "errorTitle": "Error in Payment Data",
+    "errorInvalidData": "No valid payments found. All payment amounts are null or zero.",
+    "errorNoDistributions": "No distributions to process.",
+    "executeAll": "Execute All Payments",
+    "executeBatch": "Execute in Batches",
+    "continueBatch": "Continue Batches",
+    "resetBatch": "Reset Batches",
+    "batchSize": "Batch Payments ({size})",
+    "highValuePayments": "High Value Payments",
+    "executeHighValue": "Execute High Value",
+    "mediumValuePayments": "Medium Value Payments",
+    "executeMediumValue": "Execute Medium Value",
+    "lowValuePayments": "Low Value Payments",
+    "executeLowValue": "Execute Low Value",
+    "batchProgress": {
+      "title": "Batch Progress",
+      "processed": "processed",
+      "successful": "Successful",
+      "failed": "Failed",
+      "processing": "Processing",
+      "pending": "Pending",
+      "canceled": "Canceled"
+    },
+    "notifications": {
+      "noUser": "No authenticated user",
+      "noPayments": "No payments to execute",
+      "initiating": "Initiating {count} payments with Keychain...",
+      "batchProcessing": "Processing batch {current}/{total} ({count} users)...",
+      "batchCompleted": "Batch {index} completed successfully!\n💰 {amount} HIVE distributed among {count} users\n🔗 TX: {txId}",
+      "batchCanceled": "Batch {index} canceled by user",
+      "batchError": "Error in batch {index}: {error}",
+      "allCompleted": "Batch process completed!\n✅ {successful} successful batches ({payments} payments)\n💰 Total sent: {amount} HIVE",
+      "withFailures": "\n❌ {failed} failed batches",
+      "withCanceled": "\n⏹️ {canceled} canceled batches",
+      "canContinue": "\nℹ️ You can use \"Continue batches\" to resume",
+      "success": "Success! {name} executed correctly.\n💰 Total: {amount} HIVE\n🔗 TX ID: {txId}",
+      "userCanceled": "Operation canceled by user",
+      "error": "Error executing {name}: {error}",
+      "alreadyInProgress": "A batch payment process is already in progress",
+      "noPendingBatches": "No pending batches to continue"
+    },
+    "status": {
+      "pending": "pending",
+      "processing": "processing",
+      "completed": "completed",
+      "failed": "failed",
+      "success": "success",
+      "error": "error"
+    },
+    "noPaymentsTitle": "No Payments",
+    "noPaymentsDescription": "There are no payments to display in the list"
   }
 }

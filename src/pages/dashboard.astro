@@ -4,12 +4,18 @@ import Filters from '../ui/components/filters.astro';
 import TableDelegations from '../ui/components/tableDelegations.astro';
 import Header from '../ui/components/header.astro';
 import CacheStatusIndicator from '../ui/components/CacheStatusIndicator.astro';
+import MemoSettings from '../ui/components/MemoSettings.astro';
 import { requireAuthentication } from '../middleware';
 import { protectedGetCurationStats } from '../lib/auth/protected-functions';
+import { getCurrentLocale, getTranslation } from '../i18n';
 
 // Import new design system components
 import BrandContainer from '../ui/base/BrandContainer.astro';
 import BrandCard from '../ui/base/BrandCard.astro';
+
+// Get current locale and translation function
+const currentLocale = getCurrentLocale(Astro);
+const t = (key: string) => getTranslation(currentLocale, key);
 
 // Ensure user is authenticated (middleware already handles this, but this is explicit)
 const user = requireAuthentication(Astro);
@@ -36,7 +42,7 @@ if (isAuthenticated && authenticatedUser) {
 }
 ---
 
-<Layout>
+<Layout title={t('dashboard.title')}>
   <!-- Brand container with proper responsive layout -->
   <BrandContainer variant="page" class="min-h-screen py-8">
     <div class="space-y-8">
@@ -44,8 +50,12 @@ if (isAuthenticated && authenticatedUser) {
       {authenticatedUser && <Header username={authenticatedUser} />}
 
       <!-- Filters wrapped in brand card with enhanced styling -->
-
       <Filters />
+
+      <!-- Memo Settings Component -->
+      <BrandCard class="animate-slide-up">
+        <MemoSettings />
+      </BrandCard>
 
       <!-- Delegations Table in brand card -->
       <BrandCard class="overflow-hidden animate-slide-up">

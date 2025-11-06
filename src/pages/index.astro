@@ -2,16 +2,21 @@
 import Login from '../ui/components/Login.astro';
 import Layout from '../layouts/Layout.astro';
 import { getAuthenticatedUser } from '../middleware';
+import { getCurrentLocale, getTranslation, getLocalizedPath } from '../i18n';
+
+// Get current locale and translation function
+const currentLocale = getCurrentLocale(Astro);
+const t = (key: string) => getTranslation(currentLocale, key);
 
 // Get authenticated user from middleware (server-side)
 const user = getAuthenticatedUser(Astro);
 
-// If user is authenticated, redirect to dashboard
+// If user is authenticated, redirect to dashboard (preserving locale)
 if (user) {
-  return Astro.redirect('/dashboard');
+  return Astro.redirect(getLocalizedPath('/dashboard', currentLocale));
 }
 ---
 
-<Layout>
+<Layout title={t('login.title')}>
   <Login />
 </Layout>

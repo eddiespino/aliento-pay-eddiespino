@@ -1,0 +1,640 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Filters from '../ui/components/filters.astro';
+import TableDelegations from '../ui/components/tableDelegations.astro';
+import Header from '../ui/components/header.astro';
+import CacheStatusIndicator from '../ui/components/CacheStatusIndicator.astro';
+import { requireAuthentication } from '../middleware';
+import { protectedGetCurationStats } from '../lib/auth/protected-functions';
+
+// Import new design system components
+import BrandContainer from '../ui/base/BrandContainer.astro';
+import BrandCard from '../ui/base/BrandCard.astro';
+
+// Ensure user is authenticated (middleware already handles this, but this is explicit)
+const user = requireAuthentication(Astro);
+
+// Get curation stats for the authenticated user using Astro.locals set by middleware
+let curationStats: any = null;
+let error: any = null;
+
+// Get user from middleware-set locals
+const authenticatedUser: string | null = Astro.locals.user;
+const isAuthenticated = Astro.locals.isAuthenticated;
+
+// Only get stats if user is authenticated
+if (isAuthenticated && authenticatedUser) {
+  try {
+    curationStats = await protectedGetCurationStats(authenticatedUser);
+    console.log(`📊 Estadísticas de curación obtenidas para usuario: ${authenticatedUser}`);
+  } catch (err) {
+    console.error('❌ Error cargando estadísticas de curación en servidor:', err);
+    error = err;
+  }
+} else {
+  console.log('⚠️ Dashboard: Usuario no autenticado, se cargará en cliente');
+}
+---
+
+<Layout>
+  <!-- Brand container with proper responsive layout -->
+  <BrandContainer variant="page" class="min-h-screen py-8">
+    <div class="space-y-8">
+      <!-- Header wrapped in brand card -->
+      {authenticatedUser && <Header username={authenticatedUser} />}
+
+      <!-- Filters wrapped in brand card with enhanced styling -->
+
+      <Filters />
+
+      <!-- Delegations Table in brand card -->
+      <BrandCard class="overflow-hidden animate-slide-up">
+        <TableDelegations />
+      </BrandCard>
+
+      <!-- Cache Status Indicator -->
+      <CacheStatusIndicator />
+    </div>
+  </BrandContainer>
+</Layout>
+
+<script is:inline define:vars={{ curationStats, error, authenticatedUser, isAuthenticated }}>
+  // � FUNCIÓN GLOBAL DE AUTENTICACIÓN (única definición)
+  function checkClientAuthentication() {
+    if (typeof window === 'undefined') return { isAuthenticated: false, user: null };
+
+    const user = localStorage.getItem('authenticated_user');
+    return {
+      isAuthenticated: !!user,
+      user: user,
+    };
+  }
+
+  // 🔒 Control de duplicación para evitar múltiples peticiones simultáneas
+  let isRefreshingCurationStats = false;
+  let refreshCurationStatsPromise = null;
+
+  // ✅ FUNCIÓN GLOBAL PARA OBTENER DATOS DE CURACIÓN
+  window.getCurationStatsData = function () {
+    console.log('📊 getCurationStatsData llamada');
+
+    const clientAuth = checkClientAuthentication();
+    if (!clientAuth.isAuthenticated) {
+      console.warn('⚠️ Usuario no autenticado, no se pueden obtener estadísticas de curación');
+      return {
+        curation24h: 0,
+        curation7d: 0,
+        curation30d: 0,
+        lastUpdate: new Date().toISOString(),
+        error: 'Usuario no autenticado',
+        source: 'auth_error',
+        authenticated: false,
+      };
+    }
+
+    console.log(`🔒 Usuario autenticado: ${clientAuth.user}`);
+
+    // 1. Intentar obtener del caché por usuario primero
+    try {
+      // Usar el nuevo sistema de caché si está disponible
+      if (typeof window.userCache !== 'undefined') {
+        const cachedData = window.userCache.get('curation_stats');
+        if (cachedData) {
+          const age = window.userCache.getAge('curation_stats') || 0;
+          console.log(
+            `✅ Datos de curación obtenidos del caché por usuario para ${clientAuth.user} (${Math.round(age / 1000)}s antiguos)`
+          );
+          return {
+            curation24h: cachedData.curation24h || 0,
+            curation7d: cachedData.curation7d || 0,
+            curation30d: cachedData.curation30d || 0,
+            lastUpdate: cachedData.lastUpdate || new Date().toISOString(),
+            error: cachedData.error || false,
+            source: 'user_cache',
+            user: clientAuth.user,
+            authenticated: true,
+          };
+        }
+      } else {
+        // Fallback al sistema legacy
+        const cacheKey = `curation_stats_${clientAuth.user}`;
+        const cachedData = localStorage.getItem(cacheKey);
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          const age = Date.now() - parsed.timestamp;
+          const maxAge = 10 * 60 * 1000; // 10 minutos
+
+          if (age < maxAge) {
+            console.log(
+              `✅ Datos de curación obtenidos del caché legacy para ${clientAuth.user} (${Math.round(age / 1000)}s antiguos)`
+            );
+            return {
+              curation24h: parsed.curation24h || 0,
+              curation7d: parsed.curation7d || 0,
+              curation30d: parsed.curation30d || 0,
+              lastUpdate: parsed.lastUpdate || new Date().toISOString(),
+              error: parsed.error || false,
+              source: 'legacy_cache',
+              user: clientAuth.user,
+              authenticated: true,
+            };
+          } else {
+            console.log('⚠️ Datos del caché legacy expirados, limpiando...');
+            localStorage.removeItem(cacheKey);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('⚠️ Error accediendo al caché:', err);
+    }
+
+    // 2. Usar datos del servidor como fallback
+    const serverData = {
+      curation24h: curationStats ? (curationStats.curation24h ?? curationStats.total24Hr ?? 0) : 0,
+      curation7d: curationStats ? (curationStats.curation7d ?? curationStats.total7D ?? 0) : 0,
+      curation30d: curationStats ? (curationStats.curation30d ?? curationStats.total30D ?? 0) : 0,
+      lastUpdate: curationStats ? curationStats.lastUpdate : new Date().toISOString(),
+      error: error ? true : false,
+      source: 'server',
+      user: clientAuth.user,
+      authenticated: true,
+    };
+
+    // 3. Guardar en caché si son datos válidos del servidor
+    if (curationStats && !error) {
+      try {
+        const cacheData = {
+          ...serverData,
+          timestamp: Date.now(),
+        };
+
+        // Guardar en caché por usuario si está disponible
+        if (typeof window.userCache !== 'undefined') {
+          window.userCache.set('curation_stats', cacheData);
+        } else {
+          // Fallback al sistema legacy
+          const cacheKey = `curation_stats_${clientAuth.user}`;
+          localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        }
+
+        console.log('💾 Datos del servidor guardados en caché');
+      } catch (err) {
+        console.warn('⚠️ No se pudieron guardar datos en caché:', err);
+      }
+    }
+
+    console.log(`📊 Datos retornados desde: ${serverData.source}`);
+    return serverData;
+  };
+
+  // ✅ FUNCIÓN PARA REFRESCAR ESTADÍSTICAS DE CURACIÓN
+  window.refreshCurationStats = async function () {
+    console.log('🔄 Forzando actualización de estadísticas de curación...');
+
+    // ✅ ANTI-DUPLICACIÓN: Verificar si ya hay una petición en curso
+    if (isRefreshingCurationStats) {
+      console.log('⚠️ Ya hay una petición de curation-stats en curso, reutilizando...');
+      return refreshCurationStatsPromise;
+    }
+
+    const clientAuth = checkClientAuthentication();
+    if (!clientAuth.isAuthenticated) {
+      console.warn('⚠️ Usuario no autenticado, no se puede refrescar');
+      return null;
+    }
+
+    // ✅ ANTI-DUPLICACIÓN: Verificar caché reciente (menos de 30 segundos)
+    let cacheData = null;
+    if (typeof window.userCache !== 'undefined') {
+      cacheData = window.userCache.get('curation_stats');
+    } else {
+      const cacheKey = `curation_stats_${clientAuth.user}`;
+      const stored = localStorage.getItem(cacheKey);
+      if (stored) {
+        try {
+          cacheData = JSON.parse(stored);
+        } catch (e) {
+          console.warn('⚠️ Error parsing cache data:', e);
+        }
+      }
+    }
+
+    // Si hay caché muy reciente (menos de 30 segundos), lo usamos
+    if (cacheData && cacheData.timestamp && Date.now() - cacheData.timestamp < 30000) {
+      console.log('⚡ Usando caché reciente (< 30s) para evitar duplicación');
+      return cacheData;
+    }
+
+    // ✅ MARCAR COMO EN PROCESO
+    isRefreshingCurationStats = true;
+
+    try {
+      // Crear promesa para reutilizar si hay múltiples llamadas
+      refreshCurationStatsPromise = (async () => {
+        // Limpiar caché
+        if (typeof window.userCache !== 'undefined') {
+          window.userCache.remove('curation_stats');
+        } else {
+          const cacheKey = `curation_stats_${clientAuth.user}`;
+          localStorage.removeItem(cacheKey);
+        }
+
+        // Hacer petición fresca
+        const response = await fetch('/api/curation-stats');
+        if (response.ok) {
+          const freshData = await response.json();
+
+          // Guardar en caché
+          const cacheData = {
+            ...freshData,
+            timestamp: Date.now(),
+            source: 'api',
+          };
+
+          if (typeof window.userCache !== 'undefined') {
+            window.userCache.set('curation_stats', cacheData);
+          } else {
+            const cacheKey = `curation_stats_${clientAuth.user}`;
+            localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+          }
+
+          console.log('✅ Estadísticas actualizadas desde API');
+
+          // Disparar evento para actualizar UI
+          window.dispatchEvent(
+            new CustomEvent('curation-stats-updated', {
+              detail: freshData,
+            })
+          );
+
+          return freshData;
+        } else {
+          throw new Error(`HTTP ${response.status}`);
+        }
+      })();
+
+      const result = await refreshCurationStatsPromise;
+      return result;
+    } catch (err) {
+      console.error('❌ Error actualizando estadísticas:', err);
+      return null;
+    } finally {
+      // ✅ LIBERAR LOCK
+      isRefreshingCurationStats = false;
+      refreshCurationStatsPromise = null;
+    }
+  };
+
+  console.log('✅ Dashboard: Funciones de curación inicializadas');
+
+  // 🚀 FORZAR INICIALIZACIÓN INMEDIATA PARA EVITAR PROBLEMAS DE TIMING
+  if (typeof window !== 'undefined') {
+    // Verificar que la función esté disponible inmediatamente
+    setTimeout(() => {
+      if (typeof window.getCurationStatsData === 'function') {
+        console.log('✅ getCurationStatsData está disponible y funcionando');
+      } else {
+        console.error('❌ getCurationStatsData NO está disponible - problema de inicialización');
+      }
+    }, 100);
+  }
+
+  // 🔄 CARGAR DATOS DE CURACIÓN CON RETRY AUTOMÁTICO
+  window.refreshCurationStats = async () => {
+    console.log('🔄 Refrescando estadísticas de curación...');
+
+    // Verificar que la función esté disponible
+    if (typeof window.getCurationStatsData !== 'function') {
+      console.error('❌ getCurationStatsData no está disponible');
+      return;
+    }
+
+    try {
+      const data = await window.getCurationStatsData();
+      console.log('✅ Datos de curación obtenidos:', data);
+      return data;
+    } catch (error) {
+      console.error('❌ Error al obtener datos de curación:', error);
+      throw error;
+    }
+  };
+
+  // 🚀 INICIALIZAR AUTOMÁTICAMENTE AL CARGAR LA PÁGINA
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('📄 DOM cargado, iniciando carga de curación...');
+
+    // Esperar un poco para que todas las funciones estén disponibles
+    setTimeout(() => {
+      if (typeof window.refreshCurationStats === 'function') {
+        window.refreshCurationStats().catch(error => {
+          console.error('❌ Error en carga inicial de curación:', error);
+        });
+      }
+    }, 500);
+  });
+</script>
+
+<script>
+  interface CurationStats {
+    timestamp: number;
+    [key: string]: any;
+  }
+
+  interface DashboardCacheInfo {
+    hasCurationData: boolean;
+    hasDelegationData: boolean;
+    lastUpdate: number | null;
+    curationAge: number | null;
+    needsUpdate: boolean;
+  }
+
+  declare global {
+    interface Window {
+      refreshCurationStats?: () => Promise<void>;
+      forceRefreshDashboard: () => Promise<void>;
+      getDashboardCacheInfo: () => DashboardCacheInfo | null;
+      getCurationStatsData?: () => any;
+      userCache?: any; // Simplificado para evitar conflictos de tipos
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    // Inicializar el sistema de caché por usuario y vigilante de sesión
+    const initUserSystems = async () => {
+      try {
+        // Inicializar caché por usuario
+        const { userCache, initializeUserCache } = await import('../lib/auth/user-cache');
+        // @ts-ignore - UserCacheManager compatible con interfaz simplificada
+        window.userCache = userCache;
+        initializeUserCache();
+        console.log('✅ Dashboard: Sistema de caché por usuario inicializado');
+
+        // Inicializar vigilante de sesión
+        const { initializeUserSessionWatcher, onUserSessionChange } = await import(
+          '../lib/auth/user-session-watcher'
+        );
+        initializeUserSessionWatcher();
+
+        // Escuchar cambios de usuario para refrescar dashboard
+        onUserSessionChange((previousUser, currentUser) => {
+          if (previousUser && currentUser && previousUser !== currentUser) {
+            console.log('🔄 Dashboard: Usuario cambió, refrescando página...');
+            window.location.reload();
+          } else if (previousUser && !currentUser) {
+            console.log('🔄 Dashboard: Usuario deslogueado, redirigiendo...');
+            window.location.href = '/';
+          }
+        });
+
+        console.log('✅ Dashboard: Vigilante de sesión inicializado');
+      } catch (error) {
+        console.warn('⚠️ Dashboard: Error cargando sistemas de usuario, usando fallback');
+      }
+    };
+
+    initUserSystems();
+
+    const username: string | null = localStorage.getItem('authenticated_user');
+    const greeting: HTMLElement | null = document.getElementById('user-greeting');
+    const avatar: HTMLElement | null = document.getElementById('user-avatar');
+
+    if (username) {
+      if (greeting) greeting.textContent = `@${username}`;
+      if (avatar) avatar.textContent = username.charAt(0).toUpperCase();
+    }
+
+    const logoutBtn: HTMLElement | null = document.getElementById('logout-btn');
+    if (logoutBtn) {
+      logoutBtn.onclick = async (): Promise<void> => {
+        try {
+          const currentUser = localStorage.getItem('authenticated_user');
+
+          // Usar el nuevo sistema de logout si está disponible
+          try {
+            const { handleUserLogout } = await import('../lib/auth/user-session-watcher');
+            handleUserLogout(currentUser || undefined);
+            console.log('✅ Dashboard: Logout procesado con nuevo sistema');
+          } catch (importError) {
+            console.warn('⚠️ Dashboard: Error importando sistema de logout, usando fallback');
+
+            // Fallback manual
+            localStorage.removeItem('authenticated_user');
+            if (typeof window.userCache !== 'undefined') {
+              window.userCache.clearUserCache();
+            } else {
+              // Fallback para limpieza legacy
+              localStorage.removeItem('dashboard_curation_stats');
+              localStorage.removeItem('dashboard_delegation_stats');
+              localStorage.removeItem('dashboard_last_update');
+            }
+          }
+        } catch (err) {
+          console.warn('⚠️ Error limpiando caché en logout:', err);
+        }
+
+        // Pequeña pausa antes de redirigir para permitir que se complete la limpieza
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 100);
+      };
+    }
+
+    function initializeDashboardCache(): void {
+      const shouldUpdate = checkIfUpdateNeeded();
+      if (shouldUpdate) {
+        scheduleDataUpdate();
+      }
+      setupNavigationListeners();
+      setupPeriodicUpdates();
+    }
+
+    function checkIfUpdateNeeded(): boolean {
+      try {
+        // Usar el nuevo sistema de caché por usuario si está disponible
+        if (typeof window.userCache !== 'undefined') {
+          const curationAge = window.userCache.getAge('curation_stats');
+          const dashboardAge = window.userCache.getAge('dashboard_data');
+
+          // Verificar si hay datos de curación y si no han expirado
+          if (curationAge !== null && curationAge < 10 * 60 * 1000) {
+            // Verificar datos generales del dashboard
+            if (dashboardAge !== null && dashboardAge < 15 * 60 * 1000) {
+              return false; // No necesita actualización
+            }
+          }
+
+          return true; // Necesita actualización
+        }
+
+        // Fallback al sistema legacy
+        const curationData = localStorage.getItem('dashboard_curation_stats');
+        if (!curationData) return true;
+
+        const curationStats: CurationStats = JSON.parse(curationData);
+        const curationAge: number = Date.now() - curationStats.timestamp;
+        const maxCurationAge = 10 * 60 * 1000;
+
+        if (curationAge > maxCurationAge) return true;
+
+        const lastUpdate = localStorage.getItem('dashboard_last_update');
+        if (!lastUpdate) return true;
+
+        const generalAge = Date.now() - parseInt(lastUpdate, 10);
+        const maxGeneralAge = 15 * 60 * 1000;
+
+        return generalAge > maxGeneralAge;
+      } catch (err) {
+        console.warn('⚠️ Error verificando necesidad de actualización:', err);
+        return true;
+      }
+    }
+
+    // 🔒 Control para evitar múltiples programaciones simultáneas
+    let isDataUpdateScheduled = false;
+
+    function scheduleDataUpdate(): void {
+      // ✅ ANTI-DUPLICACIÓN: Verificar si ya hay una actualización programada
+      if (isDataUpdateScheduled) {
+        console.log('⚠️ Ya hay una actualización programada, saltando...');
+        return;
+      }
+
+      console.log('⏰ Programando actualización de datos...');
+      isDataUpdateScheduled = true;
+
+      setTimeout(async () => {
+        try {
+          await updateDashboardData();
+        } catch (err) {
+          console.error('❌ Error en actualización programada:', err);
+        } finally {
+          // ✅ LIBERAR LOCK
+          isDataUpdateScheduled = false;
+        }
+      }, 1500);
+    }
+
+    // 🔒 Control para evitar múltiples actualizaciones simultáneas
+    let isUpdatingDashboardData = false;
+
+    async function updateDashboardData(): Promise<void> {
+      // ✅ ANTI-DUPLICACIÓN: Verificar si ya hay una actualización en curso
+      if (isUpdatingDashboardData) {
+        console.log('⚠️ Ya hay una actualización de dashboard en curso, saltando...');
+        return;
+      }
+
+      console.log('🔄 Actualizando datos del dashboard...');
+      isUpdatingDashboardData = true;
+
+      try {
+        if (typeof window.refreshCurationStats === 'function') {
+          await window.refreshCurationStats();
+        }
+
+        // Usar el nuevo sistema de caché por usuario si está disponible
+        if (typeof window.userCache !== 'undefined') {
+          window.userCache.set('dashboard_data', { lastUpdate: Date.now() });
+        } else {
+          // Fallback al sistema legacy
+          localStorage.setItem('dashboard_last_update', Date.now().toString());
+        }
+
+        console.log('✅ Dashboard data actualizado exitosamente');
+
+        // Emitir evento para notificar que el dashboard se actualizó
+        const event = new CustomEvent('dashboard-data-updated', {
+          detail: { timestamp: Date.now() },
+        });
+        document.dispatchEvent(event);
+      } catch (err) {
+        console.error('❌ Error actualizando datos del Dashboard:', err);
+      } finally {
+        // ✅ LIBERAR LOCK
+        isUpdatingDashboardData = false;
+      }
+    }
+
+    function setupNavigationListeners(): void {
+      console.log('🧭 Configurando listeners de navegación');
+
+      document.addEventListener('astro:page-load', function () {
+        const needsUpdate = checkIfUpdateNeeded();
+        if (needsUpdate) {
+          scheduleDataUpdate();
+        }
+      });
+
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden && window.location.pathname === '/dashboard') {
+          console.log('👁️ Dashboard visible de nuevo, verificando datos');
+          const needsUpdate = checkIfUpdateNeeded();
+          if (needsUpdate) {
+            console.log('🔄 Actualizando datos tras volver a hacer visible');
+            scheduleDataUpdate();
+          }
+        }
+      });
+    }
+
+    function setupPeriodicUpdates(): void {
+      console.log('⏰ Configurando actualizaciones periódicas');
+
+      setInterval(
+        () => {
+          if (!document.hidden && window.location.pathname === '/dashboard') {
+            console.log('⏰ Actualización periódica programada');
+            const needsUpdate = checkIfUpdateNeeded();
+            if (needsUpdate) {
+              scheduleDataUpdate();
+            }
+          }
+        },
+        10 * 60 * 1000
+      );
+    }
+
+    window.forceRefreshDashboard = async function (): Promise<void> {
+      console.log('🔄 Forzando actualización completa del Dashboard');
+      try {
+        localStorage.removeItem('dashboard_curation_stats');
+        localStorage.removeItem('dashboard_delegation_stats');
+        localStorage.removeItem('dashboard_last_update');
+        await updateDashboardData();
+        window.location.reload();
+      } catch (err) {
+        console.error('❌ Error en actualización forzada:', err);
+      }
+    };
+
+    window.getDashboardCacheInfo = function (): DashboardCacheInfo | null {
+      try {
+        const curationData = localStorage.getItem('dashboard_curation_stats');
+        const delegationData = localStorage.getItem('dashboard_delegation_stats');
+        const lastUpdate = localStorage.getItem('dashboard_last_update');
+
+        const info: DashboardCacheInfo = {
+          hasCurationData: !!curationData,
+          hasDelegationData: !!delegationData,
+          lastUpdate: lastUpdate ? parseInt(lastUpdate, 10) : null,
+          curationAge: curationData
+            ? Date.now() - (JSON.parse(curationData) as CurationStats).timestamp
+            : null,
+          needsUpdate: checkIfUpdateNeeded(),
+        };
+
+        console.log('📊 Información del caché del Dashboard:', info);
+        return info;
+      } catch (err) {
+        console.warn('⚠️ Error obteniendo información del caché:', err);
+        return null;
+      }
+    };
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeDashboardCache);
+    } else {
+      initializeDashboardCache();
+    }
+  }
+</script>

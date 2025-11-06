@@ -8,6 +8,7 @@ export interface Props {
 }
 
 import { getHiveAvatarUrl } from '../../domain/services/HiveAccountService';
+import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 
 const { user, showLogo = true, fixed = true, class: className = '', ...props } = Astro.props;
 
@@ -42,6 +43,11 @@ const navClass = `${fixed ? 'nav-brand' : 'backdrop-blur-xl bg-brand-slate-900/2
     {
       user && (
         <div class="nav-user">
+          <!-- Language Switcher -->
+          <div class="mr-3">
+            <LanguageSwitcher />
+          </div>
+
           <div class="flex items-center gap-2 mr-4">
             <img
               id="user-avatar-img"
@@ -60,6 +66,15 @@ const navClass = `${fixed ? 'nav-brand' : 'backdrop-blur-xl bg-brand-slate-900/2
           >
             Logout
           </button>
+        </div>
+      )
+    }
+
+    <!-- Language Switcher for non-authenticated users -->
+    {
+      !user && (
+        <div class="ml-auto">
+          <LanguageSwitcher />
         </div>
       )
     }

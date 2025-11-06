@@ -11,17 +11,48 @@ const translations = {
   en: enTranslations,
 } as const;
 
-// Idioma por defecto
-export const DEFAULT_LOCALE: Locale = 'es';
+// Default language - Changed to English
+export const DEFAULT_LOCALE: Locale = 'en';
 
 /**
- * Detecta el idioma desde la URL o devuelve el por defecto
+ * Detects language from URL or returns default
+ * Priority: URL path > default locale
+ *
+ * Examples:
+ * - /en/dashboard -> 'en'
+ * - /es/dashboard -> 'es'
+ * - /dashboard -> DEFAULT_LOCALE ('en')
  */
 export function detectLocale(pathname: string): Locale {
   if (pathname.startsWith('/en/')) {
     return 'en';
   }
+  if (pathname.startsWith('/es/')) {
+    return 'es';
+  }
   return DEFAULT_LOCALE;
+}
+
+/**
+ * Gets current locale from Astro context
+ * This is a helper for Astro components
+ * Now uses locale from middleware (Astro.locals.locale) for consistency
+ */
+export function getCurrentLocale(Astro: any): Locale {
+  // Prefer locale from middleware (set in context.locals)
+  if (Astro.locals?.locale) {
+    return Astro.locals.locale as Locale;
+  }
+
+  // Fallback to Astro's currentLocale (from built-in i18n)
+  if (Astro.currentLocale) {
+    return Astro.currentLocale as Locale;
+  }
+
+  // Final fallback to manual detection (for backwards compatibility)
+  const pathname = Astro.url?.pathname || Astro.request?.url || '';
+  const pathString = typeof pathname === 'string' ? pathname : pathname.toString();
+  return detectLocale(pathString);
 }
 
 /**

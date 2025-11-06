@@ -1,5 +1,9 @@
 ---
 // Login component - no props needed
+import { getCurrentLocale, getTranslation, getLocalizedPath } from '../../i18n';
+
+const currentLocale = getCurrentLocale(Astro);
+const t = (key: string) => getTranslation(currentLocale, key);
 ---
 
 <!-- Main container with full screen centering -->
@@ -31,17 +35,17 @@
             Aliento.pay
           </h1>
           <p class="text-slate-400 text-sm font-medium">
-            Conecta con tu wallet Hive Keychain
+            {t('login.subtitle')}
           </p>
         </div>
       </div>
-      
+
       <!-- Login form -->
       <form id="login-form" class="space-y-6">
         <!-- Username input -->
         <div class="space-y-2">
           <label for="username" class="block text-sm font-medium text-slate-300">
-            Usuario de Hive
+            {t('login.hiveUsername')}
           </label>
           <div class="relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -52,7 +56,7 @@
             <input
               id="username"
               type="text"
-              placeholder="tu-usuario-hive"
+              placeholder={t('login.usernamePlaceholder')}
               class="block w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500/50 transition-all duration-200 backdrop-blur-sm"
               required
             />
@@ -69,14 +73,14 @@
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z"/>
             </svg>
-            Conectar con Hive Keychain
+            {t('login.connectButton')}
           </span>
           <div id="login-spinner" class="hidden flex items-center justify-center">
             <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span id="loading-text" class="text-sm">Conectando...</span>
+            <span id="loading-text" class="text-sm">{t('login.connecting')}</span>
           </div>
         </button>
       </form>
@@ -90,41 +94,41 @@
               <div class="h-6 w-6 rounded-full bg-slate-600"></div>
             </div>
             <div class="flex-1">
-              <p class="text-sm text-slate-200 font-medium">Verificando Hive Keychain</p>
-              <p class="text-xs text-slate-400">Comprobando la extensión del navegador</p>
+              <p class="text-sm text-slate-200 font-medium">Verifying Hive Keychain</p>
+              <p class="text-xs text-slate-400">Checking browser extension</p>
             </div>
           </div>
-          
+
           <!-- Step 2: Account -->
           <div id="step-account" class="flex items-center gap-3 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 opacity-50 transition-all duration-300">
             <div class="loading-step-icon">
               <div class="h-6 w-6 rounded-full bg-slate-600"></div>
             </div>
             <div class="flex-1">
-              <p class="text-sm text-slate-200 font-medium">Verificando cuenta en Hive</p>
-              <p class="text-xs text-slate-400">Consultando la blockchain</p>
+              <p class="text-sm text-slate-200 font-medium">Verifying Hive account</p>
+              <p class="text-xs text-slate-400">Querying the blockchain</p>
             </div>
           </div>
-          
+
           <!-- Step 3: Signature -->
           <div id="step-signature" class="flex items-center gap-3 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 opacity-50 transition-all duration-300">
             <div class="loading-step-icon">
               <div class="h-6 w-6 rounded-full bg-slate-600"></div>
             </div>
             <div class="flex-1">
-              <p class="text-sm text-slate-200 font-medium">Firmando mensaje</p>
-              <p class="text-xs text-slate-400">Confirma en la ventana de Keychain</p>
+              <p class="text-sm text-slate-200 font-medium">Signing message</p>
+              <p class="text-xs text-slate-400">Confirm in Keychain window</p>
             </div>
           </div>
-          
+
           <!-- Step 4: Session -->
           <div id="step-session" class="flex items-center gap-3 p-4 rounded-xl bg-slate-800/30 border border-slate-700/50 opacity-50 transition-all duration-300">
             <div class="loading-step-icon">
               <div class="h-6 w-6 rounded-full bg-slate-600"></div>
             </div>
             <div class="flex-1">
-              <p class="text-sm text-slate-200 font-medium">Creando sesión</p>
-              <p class="text-xs text-slate-400">Configurando tu acceso seguro</p>
+              <p class="text-sm text-slate-200 font-medium">Creating session</p>
+              <p class="text-xs text-slate-400">Setting up your secure access</p>
             </div>
           </div>
         </div>
@@ -146,29 +150,29 @@
       <div class="pt-4 border-t border-slate-700/50">
         <div class="text-center space-y-3">
           <p class="text-xs text-slate-400">
-            ¿No tienes Hive Keychain?
+            {t('login.noKeychain')}
           </p>
-          <a 
-            href="https://chrome.google.com/webstore/detail/hive-keychain/jcacnejopjdphbnjgfaaobbfafkihpep" 
-            target="_blank" 
+          <a
+            href="https://chrome.google.com/webstore/detail/hive-keychain/jcacnejopjdphbnjgfaaobbfafkihpep"
+            target="_blank"
             rel="noopener noreferrer"
             class="inline-flex items-center gap-2 text-xs text-sky-400 hover:text-sky-300 transition-colors duration-200"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
             </svg>
-            Descargar extensión
+            {t('login.downloadExtension')}
           </a>
         </div>
       </div>
     </div>
   </div>
 </div>
-  <script>
+  <script define:vars={{ dashboardUrl: getLocalizedPath('/dashboard', currentLocale) }}>
     // Importar dinámicamente para evitar problemas de SSR
     window.addEventListener('DOMContentLoaded', async () => {
-      const { container } = await import('../../application/Container.js');
-      const { createLoadingManager, LoadingSteps } = await import('../../utils/loading-manager.js');
+      const { container } = await import('/src/application/Container.ts');
+      const { createLoadingManager, LoadingSteps } = await import('/src/utils/loading-manager.ts');
       const authUseCase = container.getAuthenticationUseCase();
 
       const form = document.getElementById('login-form');
@@ -210,7 +214,7 @@
         // Marcar último paso como completado
         completeStep(stepSession);
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          window.location.href = dashboardUrl;
         }, 500);
       })
       .onError((error) => {
