@@ -10,6 +10,7 @@
 import type { APIContext } from 'astro';
 import { defineMiddleware } from 'astro:middleware';
 import { sessionManager } from './lib/auth/SessionManager';
+import { detectLocale, type Locale } from './i18n';
 
 // Configuración de rutas protegidas y públicas
 const PROTECTED_ROUTES = [
@@ -135,6 +136,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   context.locals.user = currentUser;
   context.locals.isAuthenticated = !!currentUser;
 
+  // Detectar y establecer el locale desde la URL
+  const locale: Locale = context.currentLocale as Locale || detectLocale(pathname);
+  context.locals.locale = locale;
+
   // Verificar autenticación para rutas protegidas
   if (isProtectedRoute(pathname)) {
     if (!currentUser) {
@@ -225,4 +230,11 @@ export function requireAuthentication(context: APIContext): string {
     throw new Error('Autenticación requerida');
   }
   return user;
+}
+
+/**
+ * Utilidad para obtener el locale actual en componentes Astro
+ */
+export function getLocale(context: APIContext): Locale {
+  return context.locals.locale || 'en';
 }

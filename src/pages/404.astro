@@ -1,0 +1,73 @@
+---
+import Layout from '../layouts/Layout.astro';
+import BrandButton from '../ui/base/BrandButton.astro';
+import { getCurrentLocale, getTranslation, getLocalizedPath } from '../i18n';
+
+// Get current locale and translation function
+const currentLocale = getCurrentLocale(Astro);
+const t = (key: string) => getTranslation(currentLocale, key);
+---
+
+<Layout title={`404 - ${t('common.error')} | Aliento.pay`} description={t('common.error')}>
+  <div class="flex items-center justify-center min-h-screen px-4">
+    <div class="text-center max-w-2xl mx-auto">
+      <!-- 404 Large Number -->
+      <div class="mb-8">
+        <h1 class="text-9xl font-bold text-brand-purple opacity-20">404</h1>
+      </div>
+
+      <!-- Error Message -->
+      <div class="space-y-4 mb-8">
+        <h2 class="text-3xl md:text-4xl font-bold text-white">
+          Page not found
+        </h2>
+        <p class="text-lg text-gray-400">
+          Sorry, the page you're looking for doesn't exist or has been moved.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <a href={getLocalizedPath('/dashboard', currentLocale)}>
+          <BrandButton variant="primary" size="lg">
+            Go to Dashboard
+          </BrandButton>
+        </a>
+        <a href={getLocalizedPath('/', currentLocale)}>
+          <BrandButton variant="secondary" size="lg">
+            Go to Home
+          </BrandButton>
+        </a>
+      </div>
+
+      <!-- Additional Help -->
+      <div class="mt-12 p-6 bg-white bg-opacity-5 rounded-lg border border-white border-opacity-10">
+        <h3 class="text-lg font-semibold text-white mb-2">
+          Need help?
+        </h3>
+        <p class="text-gray-400">
+          If you think this is an error, please contact the support team or
+          <a href="https://github.com/eddiespino/aliento-pay" class="text-brand-purple hover:text-brand-purple-light transition-colors underline">
+            report the issue on GitHub
+          </a>.
+        </p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  /* Add a subtle animation to the 404 number */
+  h1 {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+</style>

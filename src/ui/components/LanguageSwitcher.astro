@@ -1,0 +1,198 @@
+---
+/**
+ * 🌐 LANGUAGE SWITCHER COMPONENT
+ *
+ * Allows users to switch between English and Spanish
+ * Stores preference in localStorage and reloads the page
+ */
+
+import { getCurrentLocale } from '../../i18n';
+
+const currentLocale = getCurrentLocale(Astro);
+---
+
+<div class="language-switcher">
+  <button
+    class="lang-switcher-btn flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 border border-gray-600/30 transition-all duration-200 text-white text-sm font-medium"
+    aria-label="Switch language"
+    data-current-locale={currentLocale}
+  >
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+      ></path>
+    </svg>
+    <span class="current-lang-text">{currentLocale === 'en' ? 'EN' : 'ES'}</span>
+    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+    </svg>
+  </button>
+
+  <!-- Dropdown Menu -->
+  <div
+    class="lang-menu hidden absolute right-0 mt-2 w-48 rounded-lg bg-gray-800 border border-gray-600/30 shadow-xl z-50"
+  >
+    <div class="py-1">
+      <button
+        class="lang-option w-full px-4 py-2 text-left text-sm hover:bg-gray-700/50 transition-colors flex items-center gap-3"
+        data-lang="en"
+      >
+        <span class="text-xl">🇺🇸</span>
+        <span class="flex-1 text-white">English</span>
+        <svg
+          class="w-4 h-4 text-blue-400 lang-check lang-check-en"
+          style={currentLocale === 'en' ? '' : 'display: none;'}
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+            clip-rule="evenodd"></path>
+        </svg>
+      </button>
+
+      <button
+        class="lang-option w-full px-4 py-2 text-left text-sm hover:bg-gray-700/50 transition-colors flex items-center gap-3"
+        data-lang="es"
+      >
+        <span class="text-xl">🇪🇸</span>
+        <span class="flex-1 text-white">Español</span>
+        <svg
+          class="w-4 h-4 text-blue-400 lang-check lang-check-es"
+          style={currentLocale === 'es' ? '' : 'display: none;'}
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fill-rule="evenodd"
+            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+            clip-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .language-switcher {
+    position: relative;
+  }
+
+  #lang-menu {
+    animation: slideDown 0.2s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+</style>
+
+<script>
+  // @ts-nocheck
+  (function () {
+    'use strict';
+
+    const STORAGE_KEY = 'user_language';
+
+    function initLanguageSwitcher() {
+      // Get all language switcher instances
+      const switchers = document.querySelectorAll('.language-switcher');
+
+      switchers.forEach((switcher) => {
+        const button = switcher.querySelector('.lang-switcher-btn');
+        const menu = switcher.querySelector('.lang-menu');
+        const langOptions = switcher.querySelectorAll('.lang-option');
+
+        if (!button || !menu) return;
+
+        // Toggle menu
+        button.addEventListener('click', (e) => {
+          e.stopPropagation();
+
+          // Close all other menus first
+          document.querySelectorAll('.lang-menu').forEach(m => {
+            if (m !== menu) m.classList.add('hidden');
+          });
+
+          menu.classList.toggle('hidden');
+        });
+
+        // Prevent menu from closing when clicking inside
+        menu.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+
+        // Handle language selection
+        langOptions.forEach((option) => {
+          option.addEventListener('click', () => {
+            const selectedLang = option.getAttribute('data-lang');
+            const currentLang = button.getAttribute('data-current-locale');
+
+            if (selectedLang !== currentLang) {
+              switchLanguage(selectedLang);
+            }
+
+            menu.classList.add('hidden');
+          });
+        });
+      });
+
+      // Close all menus when clicking outside
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.lang-menu').forEach(menu => {
+          menu.classList.add('hidden');
+        });
+      });
+    }
+
+    function switchLanguage(newLang) {
+      console.log(`🌐 Switching language to: ${newLang}`);
+
+      // Save to localStorage
+      localStorage.setItem(STORAGE_KEY, newLang);
+
+      // Get current path
+      const currentPath = window.location.pathname;
+      let newPath;
+
+      // Remove current language prefix if exists
+      const pathWithoutLang = currentPath.replace(/^\/(en|es)\//, '/');
+
+      // Add new language prefix if not default (English is default)
+      // English: /dashboard, Spanish: /es/dashboard
+      if (newLang === 'es') {
+        newPath = '/es' + pathWithoutLang;
+      } else {
+        newPath = pathWithoutLang;
+      }
+
+      // Preserve query parameters and hash
+      const search = window.location.search;
+      const hash = window.location.hash;
+
+      // Reload page with new language
+      window.location.href = newPath + search + hash;
+    }
+
+    // Initialize on page load
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initLanguageSwitcher);
+    } else {
+      initLanguageSwitcher();
+    }
+
+    // Re-initialize for Astro view transitions
+    document.addEventListener('astro:page-load', initLanguageSwitcher);
+  })();
+</script>

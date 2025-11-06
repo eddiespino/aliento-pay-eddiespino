@@ -1,11 +1,14 @@
 ---
 import type { Payment } from '@/domain/models/Payment';
+import { getCurrentLocale, getTranslation } from '../../i18n';
 
 export interface Props {
   payments: Payment[];
 }
 
 const { payments } = Astro.props;
+const currentLocale = getCurrentLocale(Astro);
+const t = (key: string) => getTranslation(currentLocale, key);
 ---
 
 <div class="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-600/30 rounded-xl p-6">
@@ -15,10 +18,10 @@ const { payments } = Astro.props;
         <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
         <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
       </svg>
-      Lista de Pagos
+      {t('payments.paymentList')}
     </h3>
     <div class="text-sm text-gray-400">
-      {payments.length} transferencias
+      {payments.length} {t('payments.transfers')}
     </div>
   </div>
 
@@ -45,7 +48,7 @@ const { payments } = Astro.props;
           <div class="text-right">
             <div class="font-bold text-yellow-400">{payment.amount} HIVE</div>
             <div class="text-xs text-gray-400 capitalize">
-              {payment.status || 'pendiente'}
+              {payment.status ? t(`payments.status.${payment.status}`) : t('payments.status.pending')}
             </div>
           </div>
         </div>
@@ -60,8 +63,8 @@ const { payments } = Astro.props;
           <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
         </svg>
       </div>
-      <h4 class="text-lg font-medium text-gray-300 mb-2">Sin Pagos</h4>
-      <p class="text-gray-400 text-sm">No hay pagos para mostrar en la lista</p>
+      <h4 class="text-lg font-medium text-gray-300 mb-2">{t('payments.noPaymentsTitle')}</h4>
+      <p class="text-gray-400 text-sm">{t('payments.noPaymentsDescription')}</p>
     </div>
   )}
 </div>

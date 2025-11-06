@@ -1,5 +1,9 @@
 ---
 // Componente Hero para la página de pagos con botones de acción
+import { getCurrentLocale, getTranslation } from '../../i18n';
+
+const currentLocale = getCurrentLocale(Astro);
+const t = (key: string) => getTranslation(currentLocale, key);
 ---
 
 <div class="text-center mb-12">
@@ -14,11 +18,11 @@
   </div>
   <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">
     <span class="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-      Ejecutar Pagos
+      {t('payments.pageTitle')}
     </span>
   </h1>
   <p class="text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed mb-8">
-    Revisa la distribución y ejecuta los pagos de curación de forma segura usando
+    {t('payments.heroDescription')}
     <span class="text-blue-400 font-semibold">Hive Keychain</span>
   </p>
 
@@ -31,17 +35,17 @@
       <!-- Total de pagos -->
       <div class="text-center">
         <div class="text-2xl font-bold text-white" id="total-payments">0</div>
-        <div class="text-sm text-gray-400">Pagos Totales</div>
+        <div class="text-sm text-gray-400">{t('payments.totalPayments')}</div>
       </div>
       <!-- Monto total -->
       <div class="text-center">
         <div class="text-2xl font-bold text-green-400" id="total-amount">0.000 HIVE</div>
-        <div class="text-sm text-gray-400">Monto Total</div>
+        <div class="text-sm text-gray-400">{t('payments.totalAmount')}</div>
       </div>
       <!-- Usuario conectado -->
       <div class="text-center">
-        <div class="text-lg font-semibold text-blue-400" id="connected-user">No conectado</div>
-        <div class="text-sm text-gray-400">Usuario Activo</div>
+        <div class="text-lg font-semibold text-blue-400" id="connected-user">{t('payments.notConnected')}</div>
+        <div class="text-sm text-gray-400">{t('payments.activeUser')}</div>
       </div>
     </div>
 
@@ -58,7 +62,7 @@
           <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
             <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          <span class="truncate">Ejecutar Todos los Pagos</span>
+          <span class="truncate">{t('payments.executeAll')}</span>
           <!-- Overlay de carga -->
           <div
             id="all-payments-loading"
@@ -91,7 +95,7 @@
               d="M4 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H4zM4 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H4zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM13 13a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2h-2z"
             ></path>
           </svg>
-          <span>Pagos por Lotes (20)</span>
+          <span>{t('payments.batchSize').replace('{size}', '20')}</span>
         </button>
       </div>
 
@@ -113,7 +117,7 @@
               d="M4.293 15.707a1 1 0 010-1.414L8.586 10 4.293 5.707a1 1 0 011.414-1.414l5 5a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0z"
               clip-rule="evenodd"></path>
           </svg>
-          <span>Continuar Lotes</span>
+          <span>{t('payments.continueBatch')}</span>
         </button>
 
         <!-- 🆕 Botón resetear lotes -->
@@ -127,7 +131,7 @@
               d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
               clip-rule="evenodd"></path>
           </svg>
-          <span>Resetear Lotes</span>
+          <span>{t('payments.resetBatch')}</span>
         </button>
       </div>
     </div>
@@ -145,7 +149,7 @@
             d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
             clip-rule="evenodd"></path>
         </svg>
-        <span>Refrescar</span>
+        <span>{t('payments.refresh')}</span>
       </button>
     </div>
   </div>
@@ -163,7 +167,7 @@
     >
       <div class="text-center mb-4">
         <div class="text-2xl font-bold text-red-400" id="high-group-count">0</div>
-        <div class="text-sm text-red-300">Pagos Alto Valor</div>
+        <div class="text-sm text-red-300">{t('payments.highValuePayments')}</div>
         <div class="text-lg font-semibold text-red-200" id="high-group-amount">0.000 HIVE</div>
       </div>
       <button
@@ -174,7 +178,7 @@
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        <span>Ejecutar Alto Valor</span>
+        <span>{t('payments.executeHighValue')}</span>
       </button>
     </div>
 
@@ -184,7 +188,7 @@
     >
       <div class="text-center mb-4">
         <div class="text-2xl font-bold text-blue-400" id="medium-group-count">0</div>
-        <div class="text-sm text-blue-300">Pagos Valor Medio</div>
+        <div class="text-sm text-blue-300">{t('payments.mediumValuePayments')}</div>
         <div class="text-lg font-semibold text-blue-200" id="medium-group-amount">0.000 HIVE</div>
       </div>
       <button
@@ -195,7 +199,7 @@
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        <span>Ejecutar Valor Medio</span>
+        <span>{t('payments.executeMediumValue')}</span>
       </button>
     </div>
 
@@ -205,7 +209,7 @@
     >
       <div class="text-center mb-4">
         <div class="text-2xl font-bold text-green-400" id="low-group-count">0</div>
-        <div class="text-sm text-green-300">Pagos Bajo Valor</div>
+        <div class="text-sm text-green-300">{t('payments.lowValuePayments')}</div>
         <div class="text-lg font-semibold text-green-200" id="low-group-amount">0.000 HIVE</div>
       </div>
       <button
@@ -216,7 +220,7 @@
         <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
           <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        <span>Ejecutar Bajo Valor</span>
+        <span>{t('payments.executeLowValue')}</span>
       </button>
     </div>
   </div>

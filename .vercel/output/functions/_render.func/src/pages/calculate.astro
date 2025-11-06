@@ -1,0 +1,1656 @@
+---
+import Layout from '../layouts/Layout.astro';
+import CurationCalculateTable from '../ui/components/CurationCalculateTable.astro';
+import {
+  decodeFilters,
+  calculateCurationDistribution,
+  type CalculateFilters,
+  type CalculationResult,
+} from '../lib/calculate-curation';
+import CalculationParams from '../ui/components/CalculationParams.astro';
+import { calculateDynamicPayments, getPaymentConfigForAccount } from '../lib/payment-calculator';
+import BrandCard from '../ui/base/BrandCard.astro';
+
+// ✅ OBTENER USUARIO AUTENTICADO EN LUGAR DE VALOR HARDCODEADO
+import { getAuthenticatedUser, isAuthenticated } from '../middleware';
+
+// Verificar autenticación en server-side
+const authenticatedUser = getAuthenticatedUser(Astro);
+if (!authenticatedUser) {
+  // Redirigir a login si no está autenticado
+  return Astro.redirect('/?reason=auth_required');
+}
+
+const userAccount = authenticatedUser;
+const defaultInterestPercentage = 10;
+
+// Estado inicial
+let filters: CalculateFilters;
+let calculationResult: CalculationResult | null = null;
+let error: string | null = null;
+let curationStats: any = null;
+let dynamicPaymentConfig: any = null;
+let filtersSource = 'default';
+
+// Filtros por defecto
+const defaultFilters: CalculateFilters = {
+  timePeriod: 30,
+  minimumHP: 50,
+  excludedUsers: [],
+  applied: true,
+  curationPeriod: '30d',
+  curationValue: 0,
+};
+
+// 1. Obtener filtros de la URL (solo en el servidor)
+const url = new URL(Astro.request.url);
+const filtersParam = url.searchParams.get('filters');
+const sourceParam = url.searchParams.get('source'); // Nuevo: detectar si viene del dashboard
+
+// Por defecto, asumimos que no hay filtros válidos desde el servidor
+let hasValidFiltersFromServer = false;
+let isFromDashboard = sourceParam === 'dashboard';
+
+if (filtersParam) {
+  try {
+    filters = decodeFilters(filtersParam);
+    filtersSource = 'url';
+    hasValidFiltersFromServer = true;
+    console.log('✅ Filtros desde URL:', filters);
+  } catch (err) {
+    error = 'Error decodificando filtros de URL';
+    filters = { ...defaultFilters, applied: false };
+  }
+} else {
+  // Si no hay filtros en la URL del servidor, configuramos para procesamiento en el cliente
+  console.log('⚠️ No hay filtros en URL del servidor, configurando para procesamiento en cliente');
+  filters = { ...defaultFilters, applied: false }; // Marcar como no aplicados
+}
+
+// 2. OPTIMIZACIÓN: Si viene del dashboard, NO hacer cálculos en servidor
+// Dejar que el cliente maneje todo para navegación más rápida
+if (isFromDashboard) {
+  console.log('⚡ Navegación desde Dashboard - cálculos diferidos al cliente');
+  // No calcular nada en servidor, solo preparar la página
+  filters.applied = false; // Marcar para procesamiento en cliente
+} else if (
+  hasValidFiltersFromServer &&
+  !error &&
+  filters.curationValue &&
+  filters.curationValue > 0
+) {
+  // Solo calcular en servidor si NO viene del dashboard y tiene todos los datos
+  try {
+    console.log(
+      '🚀 Usando curationValue desde filtros, evitando recálculo:',
+      filters.curationValue
+    );
+
+    // 3. Calcular distribución para el usuario autenticado
+    calculationResult = await calculateCurationDistribution(
+      userAccount,
+      filters,
+      filters.curationValue || 0,
+      defaultInterestPercentage
+    );
+
+    // 4. Calcular pagos dinámicos si es necesario con configuración personalizada
+    if (calculationResult) {
+      const userPaymentConfig = await getPaymentConfigForAccount(userAccount);
+      dynamicPaymentConfig = await calculateDynamicPayments(
+        calculationResult,
+        filters,
+        userPaymentConfig
+      );
+    }
+  } catch (err) {
+    console.error('Error en cálculos:', err);
+    error = err instanceof Error ? err.message : 'Error en cálculos';
+  }
+} else if (hasValidFiltersFromServer && !error) {
+  // Solo si necesitamos obtener las estadísticas de curación
+  console.log('⚠️ curationValue no definido, necesitamos obtener estadísticas de curación');
+  // Dejar que el cliente maneje esto para usar datos del Dashboard
+}
+
+const pageTitle = 'Calcular distribución de Curación ';
+const pageDescription =
+  'Calcula la distribución de recompensas de curación entre delegadores basada en filtros específicos.';
+---
+
+<Layout title={pageTitle} description={pageDescription}>
+  <!-- Meta tag para comunicar filtros al cliente -->
+  <meta name="calculate-filters" content="" id="calculate-filters-meta" />
+  <!-- Meta tag para comunicar el usuario autenticado al cliente -->
+  <meta name="authenticated-user" content={userAccount} id="authenticated-user-meta" />
+
+  <div class="min-h-screen max-w-7xl mx-auto">
+    <main class="container mx-auto px-4 py-8">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+          {pageTitle}
+        </h1>
+        <p class="text-gray-600 dark:text-gray-400 mt-2" id="user-subtitle">
+          Distribución de recompensas entre delegadores de @{userAccount}
+        </p>
+
+        <!-- Navegación -->
+        <nav class="flex space-x-4 mt-4">
+          <a href="/dashboard" class="text-blue-600 dark:text-blue-400 hover:underline">
+            ← Volver al Dashboard
+          </a>
+        </nav>
+      </div>
+
+      <!-- Mensaje de carga cuando no hay filtros aplicados -->
+      <div
+        class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-8 mb-8 text-center"
+        id="loading-message"
+        data-filters-loading
+      >
+        <div class="flex items-center justify-center mb-4">
+          <svg
+            class="animate-spin h-8 w-8 text-amber-600 dark:text-amber-400"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-amber-800 dark:text-amber-200 mb-2">
+          Procesando filtros...
+        </h3>
+        <p class="text-amber-700 dark:text-amber-300 text-sm">
+          Verificando si hay filtros aplicados en la URL o sesión.
+        </p>
+      </div>
+
+      <!-- Filtros aplicados -->
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8"
+        id="filters-section"
+        data-filters-applied
+        style="display: none;"
+      >
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Filtros Aplicados</h3>
+
+        <!-- Indicador de fuente -->
+        <div
+          class="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200 text-sm rounded-full mb-4"
+          id="filters-source-indicator"
+        >
+          🔗 Filtros desde URL
+        </div>
+
+        <!-- Grid de filtros -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+            <div class="text-sm text-blue-600 dark:text-blue-400 font-medium">
+              Período de Tiempo
+            </div>
+            <div
+              class="text-lg font-semibold text-blue-900 dark:text-blue-100"
+              id="filter-time-period"
+              data-filter-time-period
+            >
+              {filters.timePeriod} días
+            </div>
+          </div>
+
+          <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+            <div class="text-sm text-purple-600 dark:text-purple-400 font-medium">HP Mínimo</div>
+            <div
+              class="text-lg font-semibold text-purple-900 dark:text-purple-100"
+              id="filter-minimum-hp"
+              data-filter-minimum-hp
+            >
+              {filters.minimumHP} HP
+            </div>
+          </div>
+
+          <div class="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-lg">
+            <div class="text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+              Período de Curación
+            </div>
+            <div
+              class="text-lg font-semibold text-emerald-900 dark:text-emerald-100"
+              id="filter-curation-period"
+              data-filter-curation-period
+            >
+              {filters.curationPeriod}
+            </div>
+            <div
+              class="text-xs text-emerald-700 dark:text-emerald-300 mt-1"
+              id="filter-curation-value"
+              data-filter-curation-value
+            >
+              {filters.curationValue ? filters.curationValue.toFixed(4) : '0.0000'} HP
+            </div>
+          </div>
+
+          <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
+            <div class="text-sm text-orange-600 dark:text-orange-400 font-medium">
+              Usuarios Excluidos
+            </div>
+            <div
+              class="text-lg font-semibold text-orange-900 dark:text-orange-100"
+              id="filter-excluded-users"
+              data-filter-excluded-users
+            >
+              {filters.excludedUsers.length} usuarios
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de usuarios excluidos -->
+        <div
+          class="mt-4 p-3 bg-gray-50 dark:bg-gray-900/20 rounded-lg"
+          id="excluded-users-list"
+          style="display: none;"
+        >
+          <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">
+            Usuarios excluidos:
+          </h4>
+          <div class="flex flex-wrap gap-2" id="excluded-users-tags">
+            {
+              filters.excludedUsers.map(user => (
+                <span class="px-2 py-1 bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200 text-xs rounded">
+                  @{user}
+                </span>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Parámetros de cálculo -->
+      <div id="calculation-params-section" style="display: none;">
+        <CalculationParams
+          curationValue={0}
+          dynamicPaymentConfig={null}
+          defaultInterestPercentage={defaultInterestPercentage}
+        />
+      </div>
+
+      <!-- Mensajes de estado -->
+      <div id="error-section" style="display: none;">
+        <div
+          class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-8"
+        >
+          <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Error</h3>
+          <p class="text-sm text-red-700 dark:text-red-300 mt-1" id="error-message"></p>
+        </div>
+      </div>
+
+      <!-- Mensaje de carga para datos -->
+      <div id="loading-data-section" style="display: none;">
+        <div
+          class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-8 mb-8 text-center"
+        >
+          <div class="flex items-center justify-center mb-4">
+            <svg
+              class="animate-spin h-8 w-8 text-blue-600 dark:text-blue-400"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                class="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                stroke-width="4"></circle>
+              <path
+                class="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
+            Calculando distribución...
+          </h3>
+          <p class="text-blue-700 dark:text-blue-300 text-sm">
+            Procesando datos de delegaciones y calculando recompensas.
+          </p>
+        </div>
+      </div>
+
+      <!-- Tabla de resultados -->
+      <BrandCard class="overflow-hidden animate-slide-up">
+        <div id="results-section" style="display: none;">
+          <CurationCalculateTable
+            delegators={[]}
+            totalHP={0}
+            totalHiveToDistribute={0}
+            isLoading={false}
+          />
+        </div>
+      </BrandCard>
+
+      <!-- Información del cálculo -->
+      <div id="calculation-info-section" style="display: none;">
+        <div class="mt-8 bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Información del Cálculo
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <span class="text-gray-600 dark:text-gray-400">Fecha de Corte:</span>
+              <span class="ml-2 font-medium text-gray-900 dark:text-white" id="cutoff-date">
+                --
+              </span>
+            </div>
+            <div>
+              <span class="text-gray-600 dark:text-gray-400">Operaciones Procesadas:</span>
+              <span
+                class="ml-2 font-medium text-gray-900 dark:text-white"
+                id="processed-operations"
+              >
+                --
+              </span>
+            </div>
+            <div>
+              <span class="text-gray-600 dark:text-gray-400">Delegadores Válidos:</span>
+              <span class="ml-2 font-medium text-gray-900 dark:text-white" id="valid-delegators">
+                --
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón de proceder a pagos -->
+      <div id="payment-button-section" style="display: none;">
+        <div class="mt-8 text-center">
+          <div class="bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl p-8 shadow-xl">
+            <div class="text-white mb-6">
+              <h3 class="text-2xl font-bold mb-2">¡Cálculo Completado!</h3>
+              <p class="text-green-100 text-lg" id="delegators-count-message">
+                Distribución lista para -- delegadores
+              </p>
+            </div>
+            <a
+              href="#"
+              id="payment-button"
+              class="inline-flex items-center gap-3 bg-white text-green-600 font-bold text-lg px-8 py-4 rounded-xl hover:bg-green-50 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              💰 PROCEDER A PAGOS →
+            </a>
+            <p class="text-green-100 text-sm mt-4">
+              Continuar para configurar y ejecutar los pagos via Hive Keychain
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<script>
+  // Script del cliente para procesamiento de filtros
+  (function () {
+    'use strict';
+
+    console.log('🚀 Calculate - Script del cliente iniciado');
+
+    // Variable para controlar si ya existe un listener
+    let tableUpdateListenerInitialized = false;
+
+    // Variables globales para capturar valores del filtro de HP
+    let globalUserHPPercentage = 0;
+    let globalSliderPercentage = 0;
+
+    // Verificar si hay filtros en la URL del cliente
+    const urlParams = new URLSearchParams(window.location.search);
+    const filtersParam = urlParams.get('filters');
+
+    console.log('🔍 Parámetros URL (cliente):', filtersParam);
+
+    if (filtersParam) {
+      console.log('✅ Filtros encontrados en URL');
+
+      try {
+        const filtersObj = JSON.parse(decodeURIComponent(filtersParam));
+        console.log('📋 Filtros decodificados:', filtersObj);
+
+        if (filtersObj && filtersObj.applied) {
+          // Actualizar UI inmediatamente
+          updateUIWithFilters(filtersObj);
+          return;
+        }
+      } catch (error) {
+        console.error('❌ Error decodificando filtros:', error);
+      }
+    }
+
+    // Si no hay filtros en URL, buscar en sessionStorage
+    console.log('🔍 Buscando en sessionStorage...');
+
+    const sessionFilters = sessionStorage.getItem('appliedFilters');
+    if (sessionFilters) {
+      try {
+        const filtersObj = JSON.parse(sessionFilters);
+        console.log('📦 Filtros desde sessionStorage:', filtersObj);
+
+        if (filtersObj && filtersObj.applied) {
+          const encodedFilters = encodeURIComponent(JSON.stringify(filtersObj));
+          console.log('↩️ Redirigiendo con filtros...');
+          window.location.href = `/calculate?filters=${encodedFilters}`;
+          return;
+        }
+      } catch (error) {
+        console.error('❌ Error procesando sessionStorage:', error);
+      }
+    }
+
+    console.log('🔙 No hay filtros, redirigiendo al dashboard...');
+    setTimeout(() => {
+      window.location.href = '/dashboard';
+    }, 2000);
+
+    // Función para actualizar la UI con filtros
+    function updateUIWithFilters(filters) {
+      console.log('🎨 Actualizando UI con filtros:', filters);
+
+      // Ocultar loading
+      const loadingEl = document.getElementById('loading-message');
+      if (loadingEl) {
+        loadingEl.style.display = 'none';
+      }
+
+      // Mostrar sección de filtros
+      const filtersEl = document.getElementById('filters-section');
+      if (filtersEl) {
+        filtersEl.style.display = 'block';
+      }
+
+      // Actualizar valores de filtros
+      updateElement('filter-time-period', `${filters.timePeriod} días`);
+      updateElement('filter-minimum-hp', `${filters.minimumHP} HP`);
+      updateElement('filter-curation-period', filters.curationPeriod);
+      updateElement('filter-excluded-users', `${filters.excludedUsers.length} usuarios`);
+
+      // OPTIMIZACIÓN: Verificar si ya tenemos curationValue
+      if (filters.curationValue && filters.curationValue > 0) {
+        updateElement('filter-curation-value', `${filters.curationValue.toFixed(4)} HP`);
+        console.log('✅ curationValue ya disponible desde filtros:', filters.curationValue);
+
+        // Mostrar usuarios excluidos si hay
+        if (filters.excludedUsers.length > 0) {
+          const excludedListEl = document.getElementById('excluded-users-list');
+          if (excludedListEl) {
+            excludedListEl.style.display = 'block';
+          }
+        }
+
+        // Proceder directamente con el cálculo (sin recalcular curación)
+        showLoadingData();
+        fetchCalculationData(filters);
+      } else {
+        // Intentar obtener curationValue del Dashboard
+        console.log('🔄 Intentando obtener curationValue del Dashboard...');
+
+        const success = tryGetCurationValueFromDashboard(filters);
+        if (success) {
+          console.log('✅ curationValue obtenido del Dashboard');
+          updateElement('filter-curation-value', `${filters.curationValue.toFixed(4)} HP`);
+
+          // Mostrar usuarios excluidos si hay
+          if (filters.excludedUsers.length > 0) {
+            const excludedListEl = document.getElementById('excluded-users-list');
+            if (excludedListEl) {
+              excludedListEl.style.display = 'block';
+            }
+          }
+
+          // Proceder con el cálculo
+          showLoadingData();
+          fetchCalculationData(filters);
+        } else {
+          console.warn('⚠️ No se pudo obtener curationValue del Dashboard, usando API');
+
+          // Mostrar usuarios excluidos si hay
+          if (filters.excludedUsers.length > 0) {
+            const excludedListEl = document.getElementById('excluded-users-list');
+            if (excludedListEl) {
+              excludedListEl.style.display = 'block';
+            }
+          }
+
+          // Proceder con el cálculo (la API obtendrá curationValue)
+          showLoadingData();
+          fetchCalculationData(filters);
+        }
+      }
+
+      console.log('✅ UI actualizada con filtros');
+    }
+
+    // Función para intentar obtener curationValue del Dashboard
+    function tryGetCurationValueFromDashboard(filters) {
+      try {
+        console.log('🔍 Intentando obtener curationValue del Dashboard mejorado...');
+
+        // 1. Verificar si tenemos acceso a la función global del Dashboard
+        if (typeof window.getCurationStatsData === 'function') {
+          const curationData = window.getCurationStatsData();
+
+          if (curationData && !curationData.error) {
+            // Actualizar curationValue según el período
+            switch (filters.curationPeriod) {
+              case '24h':
+                filters.curationValue = curationData.curation24h;
+                break;
+              case '7d':
+                filters.curationValue = curationData.curation7d;
+                break;
+              case '30d':
+              default:
+                filters.curationValue = curationData.curation30d;
+                break;
+            }
+
+            console.log(
+              `✅ curationValue establecido desde Dashboard (${curationData.source}): ${filters.curationValue} HP`
+            );
+            return true;
+          }
+        }
+
+        // 2. Fallback: Verificar directamente en localStorage con validación mejorada
+        const dashboardData = localStorage.getItem('dashboard_curation_stats');
+        if (dashboardData) {
+          const parsedData = JSON.parse(dashboardData);
+          console.log('📦 Datos encontrados en localStorage:', parsedData);
+
+          // Verificar que los datos sean válidos y no estén expirados
+          if (
+            parsedData &&
+            parsedData.timestamp &&
+            !parsedData.error &&
+            Date.now() - parsedData.timestamp < 10 * 60 * 1000
+          ) {
+            // Datos válidos (menos de 10 minutos)
+            switch (filters.curationPeriod) {
+              case '24h':
+                filters.curationValue = parsedData.curation24h || 0;
+                break;
+              case '7d':
+                filters.curationValue = parsedData.curation7d || 0;
+                break;
+              case '30d':
+              default:
+                filters.curationValue = parsedData.curation30d || 0;
+                break;
+            }
+
+            const ageMinutes = Math.round((Date.now() - parsedData.timestamp) / (1000 * 60));
+            console.log(
+              `✅ curationValue obtenido desde localStorage (${ageMinutes}m): ${filters.curationValue} HP`
+            );
+            return true;
+          } else {
+            console.log('⚠️ Datos en localStorage inválidos o expirados');
+            // Limpiar datos inválidos
+            localStorage.removeItem('dashboard_curation_stats');
+          }
+        }
+
+        // 3. Si no hay datos, intentar obtener información del caché del Dashboard
+        if (typeof window.getDashboardCacheInfo === 'function') {
+          const cacheInfo = window.getDashboardCacheInfo();
+          console.log('📋 Información del caché del Dashboard:', cacheInfo);
+
+          if (!cacheInfo.needsUpdate && cacheInfo.hasCurationData) {
+            console.log('🔄 Intentando refrescar datos del Dashboard...');
+
+            // Intentar forzar una actualización si es posible
+            if (typeof window.refreshCurationStats === 'function') {
+              window
+                .refreshCurationStats()
+                .then(() => {
+                  console.log('🔄 Datos refrescados, reintentando...');
+                  // Reintentar después de refrescar
+                  setTimeout(() => {
+                    tryGetCurationValueFromDashboard(filters);
+                  }, 1000);
+                })
+                .catch(err => {
+                  console.warn('⚠️ Error refrescando datos:', err);
+                });
+            }
+          }
+        }
+
+        console.log('❌ No se pudieron obtener datos válidos del Dashboard');
+        return false;
+      } catch (error) {
+        console.warn('⚠️ Error obteniendo curationValue del Dashboard:', error);
+        return false;
+      }
+    }
+
+    // Función para mostrar loading de datos
+    function showLoadingData() {
+      const loadingDataEl = document.getElementById('loading-data-section');
+      if (loadingDataEl) {
+        loadingDataEl.style.display = 'block';
+      }
+    }
+
+    // Función para ocultar loading de datos
+    function hideLoadingData() {
+      const loadingDataEl = document.getElementById('loading-data-section');
+      if (loadingDataEl) {
+        loadingDataEl.style.display = 'none';
+      }
+    }
+
+    // Función para hacer petición API y obtener datos de cálculo
+    async function fetchCalculationData(filters) {
+      try {
+        console.log('📡 Haciendo petición API para calcular datos...');
+
+        const response = await fetch('/api/calculate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(filters),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+          console.log('✅ Datos de cálculo recibidos:', data);
+          hideLoadingData();
+          updateUIWithResults(data);
+        } else {
+          throw new Error(data.error || 'Error en el cálculo');
+        }
+      } catch (error) {
+        console.error('❌ Error en petición API:', error);
+        hideLoadingData();
+        showError(error.message || 'Error al obtener datos de cálculo');
+      }
+    }
+
+    // Función para mostrar error
+    function showError(message) {
+      const errorEl = document.getElementById('error-section');
+      const errorMessageEl = document.getElementById('error-message');
+
+      if (errorEl && errorMessageEl) {
+        errorMessageEl.textContent = message;
+        errorEl.style.display = 'block';
+      }
+    }
+
+    // Función para actualizar UI con resultados
+    function updateUIWithResults(data) {
+      console.log('📊 Actualizando UI con resultados...');
+
+      const { calculationResult, filters: updatedFilters } = data;
+
+      // Actualizar la tabla con los datos reales
+      updateTableWithData(calculationResult);
+
+      // Mostrar sección de resultados
+      const resultsEl = document.getElementById('results-section');
+      if (resultsEl) {
+        resultsEl.style.display = 'block';
+      }
+
+      // Mostrar información del cálculo
+      const calcInfoEl = document.getElementById('calculation-info-section');
+      if (calcInfoEl) {
+        calcInfoEl.style.display = 'block';
+
+        // Actualizar información
+        updateElement(
+          'cutoff-date',
+          new Date(calculationResult.cutoffDate).toLocaleDateString('es-ES')
+        );
+        updateElement(
+          'processed-operations',
+          calculationResult.processedOperations.toLocaleString()
+        );
+        updateElement('valid-delegators', calculationResult.delegators.length.toString());
+      }
+
+      // Mostrar botón de pagos
+      const paymentBtnEl = document.getElementById('payment-button-section');
+      if (paymentBtnEl) {
+        paymentBtnEl.style.display = 'block';
+
+        // Actualizar mensaje de delegadores
+        updateElement(
+          'delegators-count-message',
+          `Distribución lista para ${calculationResult.delegators.length} delegadores`
+        );
+
+        // Configurar enlace del botón - INICIALMENTE
+        const paymentBtn = document.getElementById('payment-button');
+        if (paymentBtn) {
+          // Guardar datos base para uso posterior
+          window.basePaymentData = {
+            calculationResult,
+            filters: updatedFilters,
+            curationValue: data.curationValue,
+            dynamicPaymentConfig: data.dynamicPaymentConfig,
+            defaultInterestPercentage: data.defaultInterestPercentage || 10,
+          };
+
+          // Depuración: mostrar los datos que se guardan
+          console.log('💾 [CALCULATE] Guardando basePaymentData:', {
+            'calculationResult.totalHiveToDistribute': calculationResult.totalHiveToDistribute,
+            'calculationResult.delegators.length': calculationResult.delegators.length,
+            'filters.curationValue': updatedFilters.curationValue,
+            'data.curationValue': data.curationValue,
+            'filters.curationPeriod': updatedFilters.curationPeriod,
+            defaultInterestPercentage: data.defaultInterestPercentage || 10,
+          }); // Configurar el botón con un event listener en lugar de href estático
+          paymentBtn.removeAttribute('href');
+          paymentBtn.style.cursor = 'pointer';
+
+          // Remover listeners existentes
+          paymentBtn.replaceWith(paymentBtn.cloneNode(true));
+          const newPaymentBtn = document.getElementById('payment-button');
+
+          newPaymentBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            proceedToPayments();
+          });
+        }
+      }
+
+      // Mostrar y actualizar parámetros de cálculo
+      updateCalculationParams(data);
+      const calcParamsEl = document.getElementById('calculation-params-section');
+      if (calcParamsEl) {
+        calcParamsEl.style.display = 'block';
+      }
+
+      // Guardar datos globales para recalcular pagos en cliente
+      window.calculationResult = calculationResult;
+      window.updatedFilters = updatedFilters;
+
+      console.log('✅ UI actualizada con resultados completos');
+    }
+
+    // 🆕 Función para proceder a pagos con valores actualizados
+    function proceedToPayments() {
+      console.log('🚀 Procediendo a pagos con valores actualizados...');
+
+      if (!window.basePaymentData) {
+        console.error('❌ No hay datos base para pagos');
+        return;
+      }
+
+      const {
+        calculationResult,
+        filters,
+        curationValue,
+        dynamicPaymentConfig,
+        defaultInterestPercentage,
+      } = window.basePaymentData;
+
+      // Obtener valores actualizados del slider
+      const currentSliderPercentage = globalSliderPercentage || 0;
+      const currentUserHPPercentage = globalUserHPPercentage || 0;
+
+      // Calcular descuento total
+      let totalDiscountPercentage = currentSliderPercentage;
+      const subtractUserHPCheckbox = document.getElementById('subtract-user-hp');
+      if (subtractUserHPCheckbox?.checked && currentUserHPPercentage > 0) {
+        totalDiscountPercentage += currentUserHPPercentage;
+      }
+
+      // Limitar descuento máximo al 90%
+      totalDiscountPercentage = Math.min(totalDiscountPercentage, 90);
+
+      // Calcular nuevo total basado en el descuento actualizado
+      // Usar filters.curationValue que es más confiable
+      const safeCurationValue = filters.curationValue || curationValue || 0;
+      const newTotalAmount = safeCurationValue * ((100 - totalDiscountPercentage) / 100);
+
+      // Calcular nuevos pagos individuales proporcionalmente
+      const originalTotal = calculationResult.totalHiveToDistribute;
+      const ratio = newTotalAmount / originalTotal;
+
+      // Depuración: muestra la estructura real de los delegators antes de mapear
+      console.log('🔍 [CALCULATE] Ejemplo de delegator:', calculationResult.delegators[0]);
+      console.log('🔍 [CALCULATE] Valores de curación:', {
+        'filters.curationValue': filters.curationValue,
+        curationValue: curationValue,
+        safeCurationValue: safeCurationValue,
+        totalDiscountPercentage: totalDiscountPercentage,
+        newTotalAmount: newTotalAmount,
+        originalTotal: originalTotal,
+        ratio: ratio,
+      });
+
+      const updatedDistributions = calculationResult.delegators.map((d, index) => {
+        // Validar que hiveToReceive sea un número válido
+        let paymentAmount = 0;
+
+        if (
+          d.hiveToReceive &&
+          typeof d.hiveToReceive === 'number' &&
+          !isNaN(d.hiveToReceive) &&
+          d.hiveToReceive > 0
+        ) {
+          paymentAmount = Number((d.hiveToReceive * ratio).toFixed(3));
+        } else {
+          console.warn(
+            `⚠️ [CALCULATE] Delegator ${d.delegator} tiene hiveToReceive inválido:`,
+            d.hiveToReceive
+          );
+        }
+
+        return {
+          username: d.delegator,
+          payment: paymentAmount,
+        };
+      });
+
+      // Depuración: muestra las distribuciones a guardar
+      console.log('💰 [CALCULATE] Distributions a guardar:', {
+        total: updatedDistributions.length,
+        withPayments: updatedDistributions.filter(d => d.payment > 0).length,
+        withoutPayments: updatedDistributions.filter(d => d.payment === 0).length,
+        firstWithPayment: updatedDistributions.find(d => d.payment > 0),
+        firstWithoutPayment: updatedDistributions.find(d => d.payment === 0),
+      });
+
+      // Crear objeto de pago actualizado
+      const paymentData = {
+        distributions: updatedDistributions,
+        period: filters.curationPeriod,
+        totalAmount: newTotalAmount,
+        calculationMetadata: {
+          filters: filters,
+          originalCurationValue: curationValue,
+          dynamicPercentage:
+            dynamicPaymentConfig?.dynamicReturnPercentage || defaultInterestPercentage,
+          totalHP: calculationResult.totalHP,
+          calculatedAt: new Date().toISOString(),
+          userHPPercentage: currentUserHPPercentage,
+          sliderPercentage: currentSliderPercentage,
+          totalDiscountPercentage: totalDiscountPercentage,
+          adjustedFromSlider: true, // Flag para identificar que fue ajustado
+        },
+      };
+
+      console.log('💰 Datos de pago actualizados:', {
+        originalTotal: originalTotal,
+        newTotal: newTotalAmount,
+        totalDiscountPercentage: totalDiscountPercentage,
+        distributionsCount: updatedDistributions.length,
+        sliderPercentage: currentSliderPercentage,
+        userHPPercentage: currentUserHPPercentage,
+      });
+
+      // Antes de redirigir a /payments:
+      try {
+        console.log('💾 [CALCULATE] Guardando datos en sessionStorage...');
+        console.log('📄 [CALCULATE] Datos a guardar:', {
+          distributionsCount: paymentData.distributions?.length || 0,
+          totalAmount: paymentData.totalAmount,
+          period: paymentData.period,
+          hasMetadata: !!paymentData.calculationMetadata,
+        });
+
+        sessionStorage.removeItem('payment_data'); // Limpia cualquier dato previo
+        sessionStorage.setItem('payment_data', JSON.stringify(paymentData)); // Guarda los datos recientes
+
+        console.log('✅ [CALCULATE] Datos guardados exitosamente en sessionStorage');
+        console.log('🔄 [CALCULATE] Redirigiendo a /payments...');
+
+        window.location.href = '/payments';
+      } catch (e) {
+        console.error('❌ [CALCULATE] Error guardando datos de pago en sessionStorage:', e);
+        window.location.href = '/payments'; // Redirige igual, aunque falle el guardado
+      }
+    }
+
+    // Función para actualizar los parámetros de cálculo con datos reales
+    function updateCalculationParams(data) {
+      const {
+        calculationResult,
+        filters: updatedFilters,
+        dynamicPaymentConfig,
+        defaultInterestPercentage,
+      } = data;
+
+      const calcParamsSection = document.getElementById('calculation-params-section');
+      if (!calcParamsSection) return;
+
+      const curationValue = updatedFilters.curationValue || 0;
+      const discountPercentage =
+        dynamicPaymentConfig?.dynamicReturnPercentage || defaultInterestPercentage;
+      const finalAmount = curationValue * ((100 - discountPercentage) / 100);
+
+      // Crear el HTML del componente CalculationParams actualizado
+      const paramsHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-8">
+          <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Parámetros de Cálculo</h3>
+          
+          <div class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-green-200 dark:border-green-700">
+            <div class="text-center">
+              <div class="flex items-center justify-center gap-4 text-lg font-semibold">
+                <!-- Cantidad base -->
+                <div class="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                  <span class="text-2xl font-bold" id="base-curation-value">
+                    ${curationValue.toFixed(3)}
+                  </span>
+                  <span class="text-sm font-medium">HIVE</span>
+                </div>
+                
+                <!-- Operador -->
+                <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                  <span class="text-sm">menos</span>
+                  <span class="text-xl font-bold" id="discount-percentage-display">
+                    ${discountPercentage.toFixed(0)}%
+                  </span>
+                </div>
+                
+                <!-- Flecha -->
+                <div class="text-gray-500 dark:text-gray-400">→</div>
+                
+                <!-- Resultado final -->
+                <div class="flex items-center gap-2 text-green-700 dark:text-green-300 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border-2 border-green-300 dark:border-green-600">
+                  <span class="text-2xl font-bold" id="final-amount-display">
+                    ${finalAmount.toFixed(3)}
+                  </span>
+                  <span class="text-sm font-medium">HIVE</span>
+                </div>
+              </div>
+              
+              <div class="mt-4 text-sm text-gray-600 dark:text-gray-300">
+                <span class="font-medium">Total final a distribuir entre delegadores</span>
+              </div>
+              
+              ${
+                dynamicPaymentConfig
+                  ? `
+                <div class="mt-3 text-xs text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  Porcentaje dinámico calculado automáticamente
+                </div>
+              `
+                  : ''
+              }
+            </div>
+          </div>
+          
+          <!-- Calculadora de porcentaje -->
+          <div class="mt-6 bg-gray-50 dark:bg-gray-900 rounded-xl p-6">
+            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+              Elige tu % de retorno
+            </h4>
+            
+            <div class="space-y-4">
+              <!-- Opción para restar HP del usuario logueado -->
+              <div class="bg-amber-50 dark:bg-amber-900/20 rounded-lg p-4 border border-amber-200 dark:border-amber-700">
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input type="checkbox" id="subtract-user-hp" class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400" />
+                  <div class="flex-1">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                      Restar mi porcentaje de HP del total
+                    </div>
+                    <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Se restará automáticamente tu porcentaje de HP del total a distribuir
+                    </div>
+                    <div class="text-xs text-blue-600 dark:text-blue-400 mt-1" id="user-hp-percentage">
+                      Cargando porcentaje...
+                    </div>
+                  </div>
+                </label>
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2" for="percentage-slider">
+                  Porcentaje de descuento: <span class="text-blue-600 dark:text-blue-400 font-bold" id="percentage-value">${discountPercentage.toFixed(1)}%</span>
+                </label>
+                <input type="range" id="percentage-slider" min="0" max="50" step="0.1" value="${discountPercentage}" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700 slider" />
+                <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mt-1">
+                  <span>0%</span>
+                  <span>25%</span>
+                  <span>50%</span>
+                </div>
+              </div>
+              
+              <!-- Resultado actualizado -->
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">Nuevo total a distribuir:</div>
+                <div class="text-2xl font-bold text-green-600 dark:text-green-400" id="updated-amount">
+                  ${finalAmount.toFixed(3)} HIVE
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      calcParamsSection.innerHTML = paramsHTML;
+
+      // Reinicializar el slider con los datos correctos
+      initializeCalculationParamsSlider(curationValue, calculationResult.totalHiveToDistribute);
+    }
+
+    // Función para inicializar el slider de parámetros de cálculo
+    function initializeCalculationParamsSlider(baseCurationValue, originalTotal) {
+      const slider = document.getElementById('percentage-slider');
+      const percentageValue = document.getElementById('percentage-value');
+      const updatedAmount = document.getElementById('updated-amount');
+      const discountDisplay = document.getElementById('discount-percentage-display');
+      const finalAmountDisplay = document.getElementById('final-amount-display');
+      const subtractUserHPCheckbox = document.getElementById('subtract-user-hp');
+      const userHPPercentageDisplay = document.getElementById('user-hp-percentage');
+
+      let userHPPercentage = 0;
+      let currentSliderPercentage = parseFloat(slider?.value || '0');
+
+      // Calcular el porcentaje de HP del usuario logueado
+      async function calculateUserHPPercentage() {
+        try {
+          const username = getUsernameFromLocalStorage();
+          console.log('🔍 Username obtenido:', username);
+
+          if (!username) {
+            console.error('❌ No se pudo obtener el username');
+            userHPPercentageDisplay.textContent = 'Usuario no encontrado';
+            return;
+          }
+
+          userHPPercentageDisplay.textContent = 'Calculando...';
+          console.log('🚀 Calculando porcentaje de HP para:', username);
+
+          // Importar y usar el servicio directamente
+          const { HiveAccountService } = await import('../domain/services/HiveAccountService');
+          const percentageResult = await HiveAccountService.calculateHPPercentage(username);
+
+          if (!percentageResult.success) {
+            console.error('❌ Error del servicio:', percentageResult.error.message);
+            userHPPercentageDisplay.textContent = 'Error al calcular porcentaje';
+            return;
+          }
+
+          userHPPercentage = percentageResult.data;
+          console.log('🧮 Porcentaje calculado:', userHPPercentage);
+          userHPPercentageDisplay.textContent = `Tu porcentaje de HP: ${userHPPercentage.toFixed(2)}%`;
+        } catch (error) {
+          console.error('Error calculando porcentaje de HP:', error);
+          userHPPercentageDisplay.textContent = 'Error al calcular porcentaje';
+        }
+      }
+
+      // Función para obtener el username del localStorage
+      function getUsernameFromLocalStorage() {
+        // Primero intentar obtener desde el meta tag del servidor
+        const metaTag = document.getElementById('authenticated-user-meta');
+        if (metaTag) {
+          const serverUser = metaTag.getAttribute('content');
+          console.log('🔍 Server user desde meta tag:', serverUser);
+
+          if (serverUser && serverUser !== 'undefined' && serverUser !== '') {
+            console.log('✅ Usando usuario del servidor:', serverUser);
+            return serverUser;
+          }
+        }
+
+        // Fallback: obtener desde localStorage
+        const authUser = localStorage.getItem('authenticated_user');
+        console.log('🔍 Auth user from localStorage:', authUser);
+
+        if (authUser) {
+          try {
+            // El authenticated_user parece ser solo el username como string
+            const trimmedUser = authUser.trim();
+            console.log('✅ Usando usuario del localStorage:', trimmedUser);
+            return trimmedUser;
+          } catch (e) {
+            console.error('Error parsing auth user:', e);
+          }
+        }
+
+        console.error('❌ No se encontró usuario en servidor ni en localStorage');
+        return null;
+      }
+
+      // Función para actualizar el cálculo considerando todos los descuentos
+      function updateCalculation() {
+        let totalDiscountPercentage = currentSliderPercentage;
+
+        // Si el checkbox está marcado, agregar el porcentaje de HP del usuario
+        if (subtractUserHPCheckbox?.checked && userHPPercentage > 0) {
+          totalDiscountPercentage += userHPPercentage;
+        }
+
+        // Limitar el descuento máximo al 90%
+        totalDiscountPercentage = Math.min(totalDiscountPercentage, 90);
+
+        const newAmount = baseCurationValue * ((100 - totalDiscountPercentage) / 100);
+
+        // Actualizar la UI
+        if (updatedAmount) {
+          updatedAmount.textContent = newAmount.toFixed(3) + ' HIVE';
+        }
+
+        if (finalAmountDisplay) {
+          finalAmountDisplay.textContent = newAmount.toFixed(3);
+        }
+
+        // Disparar evento personalizado para actualizar la tabla
+        const event = new CustomEvent('percentageChange', {
+          detail: {
+            percentage: totalDiscountPercentage,
+            newAmount,
+            userHPPercentage,
+            sliderPercentage: currentSliderPercentage,
+          },
+        });
+        window.dispatchEvent(event);
+
+        // Actualizar variables globales
+        globalUserHPPercentage = userHPPercentage;
+        globalSliderPercentage = currentSliderPercentage;
+
+        // 🆕 Actualizar enlace de proceder a pagos con valores actualizados
+        const paymentBtn = document.getElementById('payment-button');
+        if (paymentBtn && window.calculationResult && window.updatedFilters) {
+          // Calcular nuevos pagos individuales proporcionalmente
+          const originalTotal = window.calculationResult.totalHiveToDistribute;
+          const ratio = newAmount / originalTotal;
+          const updatedDist = window.calculationResult.delegators.map(d => ({
+            username: d.delegator,
+            payment: Number((d.hiveToReceive * ratio).toFixed(3)),
+          }));
+
+          const paymentData = {
+            distributions: updatedDist,
+            period: window.updatedFilters.curationPeriod,
+            totalAmount: newAmount,
+            calculationMetadata: Object.assign({}, window.updatedFilters, {
+              sliderPercentage: currentSliderPercentage,
+              userHPPercentage: userHPPercentage,
+            }),
+          };
+          paymentBtn.href = `/payments?data=${encodeURIComponent(JSON.stringify(paymentData))}`;
+        }
+      }
+
+      // Inicializar el cálculo del porcentaje de HP del usuario
+      calculateUserHPPercentage();
+
+      // Event listener para el slider
+      if (slider && percentageValue) {
+        slider.addEventListener('input', e => {
+          currentSliderPercentage = parseFloat(e.target.value);
+          percentageValue.textContent = currentSliderPercentage.toFixed(1) + '%';
+
+          if (discountDisplay) {
+            discountDisplay.textContent = currentSliderPercentage.toFixed(0) + '%';
+          }
+
+          updateCalculation();
+        });
+      }
+
+      // Event listener para el checkbox
+      if (subtractUserHPCheckbox) {
+        subtractUserHPCheckbox.addEventListener('change', updateCalculation);
+      }
+    }
+
+    // Función para actualizar la tabla con datos reales
+    function updateTableWithData(calculationResult) {
+      const resultsSection = document.getElementById('results-section');
+      if (!resultsSection) return;
+
+      // Crear el HTML de la tabla completa
+      const tableHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <!-- Header de la tabla -->
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                  Distribución de Curación
+                </h2>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  ${calculationResult.delegators.length} delegadores válidos
+                </p>
+              </div>
+              <div class="flex flex-col sm:flex-row gap-4 text-sm">
+                <div class="bg-blue-50 dark:bg-blue-900/20 px-3 py-2 rounded-lg">
+                  <span class="text-blue-600 dark:text-blue-400 font-medium">
+                    Total HP: ${formatHP(calculationResult.totalHP)}
+                  </span>
+                </div>
+                <div class="bg-green-50 dark:bg-green-900/20 px-3 py-2 rounded-lg">
+                  <span class="text-green-600 dark:text-green-400 font-medium" id="total-hive-display">
+                    Total Hive: ${formatHive(calculationResult.totalHiveToDistribute)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Tabla de delegadores -->
+          <div class="overflow-x-auto">
+            <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Delegador
+                  </th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    HP Delegado
+                  </th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Participación
+                  </th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Hive a Recibir
+                  </th>
+                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Fecha Delegación
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                ${calculationResult.delegators
+                  .map(
+                    (delegator, index) => `
+                  <tr class="delegator-row hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                      data-percentage="${delegator.percentage}"
+                      data-base-hive="${delegator.hiveToReceive}"
+                      data-delegator="${delegator.delegator}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="flex items-center">
+                        <div class="relative flex-shrink-0 w-8 h-8">
+                          <!-- Avatar con fallback integrado -->
+                          <img 
+                            src="https://images.hive.blog/u/${delegator.delegator.replace('@', '').trim().toLowerCase()}/avatar" 
+                            alt="@${delegator.delegator}"
+                            class="w-8 h-8 rounded-full object-cover"
+                            onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden'); this.nextElementSibling.classList.add('flex');"
+                            onload="this.nextElementSibling.classList.add('hidden'); this.nextElementSibling.classList.remove('flex');"
+                          />
+                          <!-- Fallback que aparece solo si falla la imagen -->
+                          <div class="hidden w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full items-center justify-center">
+                            <span class="text-white text-sm font-medium">
+                              ${delegator.delegator.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="ml-3">
+                          <div class="text-sm font-medium text-gray-900 dark:text-white">
+                            @${delegator.delegator}
+                          </div>
+                          <div class="text-sm text-gray-500 dark:text-gray-400">
+                            #${index + 1}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                      <div class="text-sm font-medium text-gray-900 dark:text-white">
+                        ${formatHP(delegator.hp)} HP
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                      <div class="text-sm font-medium text-gray-900 dark:text-white">
+                        ${formatPercentage(delegator.percentage)}
+                      </div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">
+                        de ${formatHP(calculationResult.totalHP)} HP
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                      <div class="hive-to-receive text-sm font-medium text-green-600 dark:text-green-400 transition-all duration-300">
+                        ${formatHive(delegator.hiveToReceive)} HIVE
+                      </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right">
+                      <div class="text-sm text-gray-900 dark:text-white">
+                        ${formatDate(delegator.timestamp)}
+                      </div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">
+                        Bloque #${delegator.blockNum.toLocaleString()}
+                      </div>
+                    </td>
+                  </tr>
+                `
+                  )
+                  .join('')}
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Footer de la tabla -->
+          <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div class="text-sm text-gray-600 dark:text-gray-400">
+                Mostrando ${calculationResult.delegators.length} delegadores válidos
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span class="text-gray-600 dark:text-gray-400">HP Delegado</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span class="text-gray-600 dark:text-gray-400">Hive a Recibir</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      resultsSection.innerHTML = tableHTML;
+
+      // Reinicializar el listener para cambios de porcentaje
+      initializePercentageChangeListener(calculationResult.totalHiveToDistribute);
+
+      console.log(
+        `✅ Calculate: Tabla renderizada con ${calculationResult.delegators.length} delegadores y avatares integrados`
+      );
+    }
+
+    // Funciones de formato (clones de las funciones del componente Astro)
+    function formatHP(hp) {
+      return hp.toFixed(2);
+    }
+
+    function formatPercentage(percentage) {
+      return `${percentage.toFixed(2)}%`;
+    }
+
+    function formatHive(hive) {
+      return hive.toFixed(3);
+    }
+
+    function formatDate(timestamp) {
+      return new Date(timestamp).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+
+    // Función para reinicializar el listener de cambio de porcentaje
+    function initializePercentageChangeListener(originalTotal) {
+      // Solo inicializar una vez para evitar múltiples listeners
+      if (tableUpdateListenerInitialized) return;
+
+      window.addEventListener('percentageChange', event => {
+        const { percentage, newAmount, userHPPercentage, sliderPercentage } = event.detail;
+
+        // Actualizar el total en el header
+        const totalHiveElement = document.getElementById('total-hive-display');
+        if (totalHiveElement) {
+          totalHiveElement.textContent = `Total Hive: ${newAmount.toFixed(3)}`;
+        }
+
+        // Actualizar cada fila de la tabla
+        const delegatorRows = document.querySelectorAll('.delegator-row');
+        delegatorRows.forEach(row => {
+          const baseHive = parseFloat(row.getAttribute('data-base-hive') || '0');
+
+          // Calcular nuevo valor basado en el porcentaje cambiado
+          const ratio = newAmount / originalTotal;
+          const newHiveValue = baseHive * ratio;
+
+          // Actualizar la celda de "Hive a Recibir"
+          const hiveCell = row.querySelector('.hive-to-receive');
+          if (hiveCell) {
+            hiveCell.textContent = `${newHiveValue.toFixed(3)} HIVE`;
+
+            // Agregar efecto visual de actualización
+            hiveCell.classList.add('animate-pulse');
+            setTimeout(() => {
+              hiveCell.classList.remove('animate-pulse');
+            }, 500);
+          }
+        });
+      });
+
+      tableUpdateListenerInitialized = true;
+    }
+
+    // Función helper para actualizar elementos
+    function updateElement(id, content) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = content;
+      }
+    }
+
+    // Función para detectar navegación desde dashboard
+    function isFromDashboard() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const source = urlParams.get('source');
+      const sessionFlag = sessionStorage.getItem('calculate_loading');
+      return source === 'dashboard' || sessionFlag === 'true';
+    }
+
+    // Función para mostrar estado de carga mejorado
+    function showEnhancedLoading() {
+      const loadingMessage = document.getElementById('loading-message');
+      if (loadingMessage) {
+        loadingMessage.innerHTML = `
+          <div class="flex items-center justify-center mb-4">
+            <svg class="animate-spin h-8 w-8 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
+            🚀 Procesando desde Dashboard...
+          </h3>
+          <div class="space-y-2 text-sm text-blue-700 dark:text-blue-300">
+            <div class="flex items-center justify-center gap-2">
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span>Cargando filtros aplicados</span>
+            </div>
+            <div id="loading-step-2" class="flex items-center justify-center gap-2 opacity-50">
+              <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+              <span>Obteniendo datos de curación</span>
+            </div>
+            <div id="loading-step-3" class="flex items-center justify-center gap-2 opacity-50">
+              <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <span>Calculando distribución</span>
+            </div>
+          </div>
+          <p class="text-blue-600 dark:text-blue-400 text-xs mt-3">
+            ⚡ Navegación rápida activada
+          </p>
+        `;
+        loadingMessage.style.display = 'block';
+      }
+    }
+
+    // Función para actualizar paso de carga
+    function updateLoadingStep(step) {
+      const stepElements = {
+        2: document.getElementById('loading-step-2'),
+        3: document.getElementById('loading-step-3'),
+      };
+
+      if (stepElements[step]) {
+        stepElements[step].classList.remove('opacity-50');
+        const dot = stepElements[step].querySelector('.w-2');
+        if (dot) {
+          dot.classList.add('animate-pulse');
+          dot.classList.remove('bg-yellow-500', 'bg-blue-500');
+          dot.classList.add('bg-green-500');
+        }
+      }
+    }
+
+    // Función de procesamiento progresivo mejorado
+    async function processProgressively() {
+      console.log('🔄 Iniciando procesamiento progresivo...');
+
+      try {
+        // Paso 1: Mostrar loading mejorado
+        showEnhancedLoading();
+
+        // Paso 2: Cargar filtros
+        updateLoadingStep(2);
+        const filters = await loadFiltersFromClient();
+        if (!filters) {
+          throw new Error('No se pudieron cargar los filtros');
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 300)); // Mini delay para UX
+
+        // Paso 3: Procesar cálculos
+        updateLoadingStep(3);
+        const result = await calculateAndProcess(filters);
+
+        // Limpiar flags de carga
+        sessionStorage.removeItem('calculate_loading');
+        sessionStorage.removeItem('calculate_source');
+
+        return result;
+      } catch (error) {
+        console.error('❌ Error en procesamiento progresivo:', error);
+        sessionStorage.removeItem('calculate_loading');
+        showError('Error procesando los cálculos: ' + error.message);
+        throw error;
+      }
+    }
+
+    // Verificar autenticación y procesar página cuando esté lista
+    document.addEventListener('DOMContentLoaded', async function () {
+      console.log('📋 DOM cargado, inicializando página...');
+
+      try {
+        // 1. Verificar autenticación
+        const { container } = await import('../application/Container');
+        const authUseCase = container.getAuthenticationUseCase();
+        const user = authUseCase.getCurrentUser();
+
+        if (user) {
+          console.log(`👤 Usuario autenticado: @${user}`);
+          const subtitle = document.getElementById('user-subtitle');
+          if (subtitle) {
+            subtitle.textContent = `Distribución de recompensas entre delegadores de @${user}`;
+          }
+
+          // 2. Procesar página según el origen
+          if (isFromDashboard()) {
+            console.log('⚡ Navegación desde Dashboard detectada - procesamiento progresivo');
+            await processProgressively();
+          } else {
+            console.log('🔄 Procesamiento normal');
+            await processClientFilters();
+          }
+        } else {
+          console.warn('⚠️ No hay usuario autenticado');
+          setTimeout(() => (window.location.href = '/'), 2000);
+        }
+      } catch (error) {
+        console.error('❌ Error inicializando página:', error);
+      }
+    });
+
+    console.log(
+      '✅ Calculate: Avatares integrados directamente en el HTML - no requiere JavaScript adicional'
+    );
+  })();
+</script>
+
+<style>
+  /* Animación suave para hover */
+  tbody tr {
+    transition: all 0.2s ease-in-out;
+  }
+
+  /* Mejora visual para números */
+  .text-right {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Animación para valores que cambian */
+  .hive-to-receive {
+    transition: all 0.3s ease-in-out;
+  }
+
+  /* Efecto de actualización */
+  .animate-pulse {
+    animation: pulse 0.5s ease-in-out;
+  }
+
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      background-color: rgba(34, 197, 94, 0.1);
+    }
+    50% {
+      transform: scale(1.05);
+      background-color: rgba(34, 197, 94, 0.2);
+    }
+    100% {
+      transform: scale(1);
+      background-color: rgba(34, 197, 94, 0.1);
+    }
+  }
+
+  /* Estilos para el slider dinámico */
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #3b82f6;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .slider::-webkit-slider-track {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+  }
+
+  .slider::-moz-range-track {
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+    border: none;
+  }
+</style>
