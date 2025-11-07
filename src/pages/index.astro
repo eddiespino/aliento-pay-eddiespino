@@ -1,22 +1,410 @@
 ---
-import Login from '../ui/components/Login.astro';
 import Layout from '../layouts/Layout.astro';
-import { getAuthenticatedUser } from '../middleware';
-import { getCurrentLocale, getTranslation, getLocalizedPath } from '../i18n';
+import { enTranslations, esTranslations } from '../i18n';
 
-// Get current locale and translation function
-const currentLocale = getCurrentLocale(Astro);
-const t = (key: string) => getTranslation(currentLocale, key);
+const currentYear = new Date().getFullYear();
+const logoUrl = 'https://files.peakd.com/file/peakd-hive/aliento/1000911907.jpg';
 
-// Get authenticated user from middleware (server-side)
-const user = getAuthenticatedUser(Astro);
-
-// If user is authenticated, redirect to dashboard (preserving locale)
-if (user) {
-  return Astro.redirect(getLocalizedPath('/dashboard', currentLocale));
-}
+// Pass translations to the client
+const translations = {
+  en: enTranslations.landing,
+  es: esTranslations.landing
+};
 ---
 
-<Layout title={t('login.title')}>
-  <Login />
+<Layout
+  title="Aliento Pay — Delegate Hive Power & Earn"
+  description="Delegate to Aliento and choose how you get paid: HIVE, HBD, Hive Power — or donate to boost the project."
+>
+  <div class="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl bg-[var(--bg)]/80 border-b border-[var(--border)]">
+      <div class="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <img src={logoUrl} alt="Aliento logo" class="h-8 w-8 rounded-lg" />
+          <span class="font-semibold text-lg" data-i18n="title">Aliento Pay</span>
+        </a>
+
+        <!-- Navigation -->
+        <div class="flex items-center gap-4">
+          <!-- Language Switcher -->
+          <div class="flex gap-2">
+            <button
+              data-lang="en"
+              class="lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-anakiwa-500 text-[var(--primary-contrast)]"
+            >
+              EN
+            </button>
+            <button
+              data-lang="es"
+              class="lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-[var(--mutedFg)] hover:text-[var(--fg)]"
+            >
+              ES
+            </button>
+          </div>
+
+          <!-- Delegate Button -->
+          <a
+            href="/delegate"
+            class="px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg shadow-orange-500/20 focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-[var(--bg)]"
+          >
+            Delegate
+          </a>
+
+          <!-- Curator Login Button -->
+          <a
+            href="/login"
+            class="px-4 py-2 rounded-lg bg-gradient-to-r from-[#09b1ee] to-[#0891c7] text-white font-medium hover:from-[#0891c7] hover:to-[#0284c7] transition-all duration-200 shadow-lg shadow-[#09b1ee]/20 focus:outline-none focus:ring-2 focus:ring-[#09b1ee] focus:ring-offset-2 focus:ring-offset-[var(--bg)]"
+          >
+            Curator Login
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden">
+      <!-- Background gradient -->
+      <div
+        class="absolute inset-0 opacity-30 pointer-events-none"
+        style="background: radial-gradient(60% 60% at 50% 10%, rgba(51,200,253,0.25) 0%, rgba(4,18,27,0) 60%)"
+      ></div>
+
+      <!-- Animated background particles -->
+      <div class="absolute inset-0 opacity-10 pointer-events-none">
+        <div class="absolute top-20 left-10 w-64 h-64 bg-anakiwa-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-slow"></div>
+        <div class="absolute top-40 right-10 w-72 h-72 bg-anakiwa-600 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-slow" style="animation-delay: 1s;"></div>
+        <div class="absolute bottom-20 left-1/2 w-80 h-80 bg-anakiwa-400 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-slow" style="animation-delay: 2s;"></div>
+      </div>
+
+      <div class="relative mx-auto max-w-6xl px-4 py-24 md:py-32">
+        <!-- Trust badge -->
+        <div class="flex justify-center mb-6 animate-fade-in">
+          <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bgElevated)] border border-[var(--border)] text-sm text-[var(--mutedFg)]">
+            <img src={logoUrl} alt="Aliento" class="h-5 w-5 rounded" />
+            <span>Powered by Aliento</span>
+            <span class="text-[var(--border)]">•</span>
+            <span>Hive ecosystem</span>
+          </div>
+        </div>
+
+        <!-- Eyebrow -->
+        <p class="text-center text-sm text-anakiwa-400 font-medium animate-slide-up" data-i18n="eyebrow">
+          Delegate Hive Power. Support creators. Earn flexibly.
+        </p>
+
+        <!-- Main heading -->
+        <h1 class="mt-4 text-center text-4xl md:text-6xl font-semibold leading-tight animate-slide-up" style="animation-delay: 0.1s;">
+          <span class="bg-gradient-to-r from-[var(--fg)] via-anakiwa-200 to-anakiwa-300 bg-clip-text text-transparent" data-i18n="title">
+            Aliento Pay
+          </span>
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="mt-6 mx-auto max-w-2xl text-center text-lg text-[var(--mutedFg)] leading-relaxed animate-slide-up" style="animation-delay: 0.2s;" data-i18n="subtitle">
+          Delegate to Aliento and choose how you get paid: HIVE, HBD, Hive Power — or donate to boost the project.
+        </p>
+
+        <!-- Two Portal Options -->
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto animate-slide-up" style="animation-delay: 0.3s;">
+          <!-- Delegator Portal -->
+          <a
+            href="/delegate"
+            class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-orange-500/10 to-orange-500/5 dark:from-orange-500/20 dark:to-orange-500/10 border-2 border-orange-500/30 hover:border-orange-500/50 p-8 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20"
+          >
+            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/20 to-transparent rounded-bl-full"></div>
+            <div class="relative">
+              <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-orange-500/30">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Delegate & Earn</h3>
+              <p class="text-gray-600 dark:text-gray-400 mb-4">Calculate earnings, choose payment preferences, and delegate HP to @aliento</p>
+              <div class="flex items-center text-orange-500 font-semibold group-hover:gap-2 transition-all">
+                <span>Start Delegating</span>
+                <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+            </div>
+          </a>
+
+          <!-- Curator Dashboard -->
+          <a
+            href="/login"
+            class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#09b1ee]/10 to-[#09b1ee]/5 dark:from-[#09b1ee]/20 dark:to-[#09b1ee]/10 border-2 border-[#09b1ee]/30 hover:border-[#09b1ee]/50 p-8 transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-[#09b1ee]/20"
+          >
+            <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#09b1ee]/20 to-transparent rounded-bl-full"></div>
+            <div class="relative">
+              <div class="w-16 h-16 bg-gradient-to-br from-[#09b1ee] to-[#0891c7] rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-[#09b1ee]/30">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Curator Dashboard</h3>
+              <p class="text-gray-600 dark:text-gray-400 mb-4">Manage delegations, calculate distributions, and send curation rewards</p>
+              <div class="flex items-center text-[#09b1ee] font-semibold group-hover:gap-2 transition-all">
+                <span>Curator Login</span>
+                <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
+            </div>
+          </a>
+        </div>
+
+        <!-- Learn More Link -->
+        <div class="mt-8 flex justify-center">
+          <a
+            href="#how-it-works"
+            class="text-[var(--mutedFg)] hover:text-[var(--fg)] font-medium transition-colors flex items-center gap-2 group"
+          >
+            <span data-i18n="ctaSecondary">How it works</span>
+            <svg class="w-4 h-4 group-hover:translate-y-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works Section -->
+    <section id="how-it-works" class="mx-auto max-w-6xl px-4 py-16 md:py-24">
+      <h2 class="text-center text-3xl md:text-4xl font-semibold mb-12" data-i18n="how.title">
+        How it works
+      </h2>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            class="group relative rounded-2xl border border-[var(--border)] bg-[var(--bgElevated)] p-6 hover:border-anakiwa-600 hover:shadow-lg hover:shadow-anakiwa-500/20 transition-all duration-300 transform hover:-translate-y-1"
+          >
+            <div class="mb-4 flex items-center gap-3">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-anakiwa-500/20 text-anakiwa-400 font-bold group-hover:bg-anakiwa-500 group-hover:text-[var(--primary-contrast)] transition-colors">
+                {i + 1}
+              </div>
+              <div class="h-px flex-1 bg-[var(--border)] group-hover:bg-anakiwa-600 transition-colors"></div>
+            </div>
+            <div class="font-medium text-[var(--fg)] leading-relaxed" data-i18n={`how.steps.${i}`}>
+              Step {i + 1}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- Why delegate Section -->
+    <section class="mx-auto max-w-6xl px-4 py-16 md:py-24">
+      <h2 class="text-center text-3xl md:text-4xl font-semibold mb-12" data-i18n="why.title">
+        Why delegate with Aliento
+      </h2>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            class="group relative rounded-2xl border border-[var(--border)] bg-[var(--bgElevated)] p-8 hover:border-anakiwa-600 hover:shadow-lg hover:shadow-anakiwa-500/20 transition-all duration-300 transform hover:-translate-y-1"
+          >
+            <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-anakiwa-500/20 text-anakiwa-400 group-hover:bg-anakiwa-500 group-hover:text-[var(--primary-contrast)] transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {i === 0 && (
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                )}
+                {i === 1 && (
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                )}
+                {i === 2 && (
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                )}
+              </svg>
+            </div>
+            <h3 class="mb-3 text-xl font-semibold text-anakiwa-400" data-i18n={`why.cards.${i}.h`}>
+              Card {i + 1}
+            </h3>
+            <p class="text-[var(--mutedFg)] leading-relaxed" data-i18n={`why.cards.${i}.p`}>
+              Description {i + 1}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="mx-auto max-w-4xl px-4 py-16 md:py-24">
+      <h2 class="text-center text-3xl md:text-4xl font-semibold mb-12" data-i18n="faq.title">
+        FAQ
+      </h2>
+
+      <div class="space-y-4">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <details
+            key={i}
+            class="group rounded-xl border border-[var(--border)] bg-[var(--bgElevated)] overflow-hidden hover:border-anakiwa-600 transition-colors"
+          >
+            <summary class="flex items-center justify-between cursor-pointer list-none px-6 py-4 font-medium text-[var(--fg)] hover:text-anakiwa-400 transition-colors select-none">
+              <span data-i18n={`faq.items.${i}.q`}>Question {i + 1}</span>
+              <svg
+                class="w-5 h-5 transform transition-transform group-open:rotate-180"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </summary>
+            <div class="px-6 pb-4 text-[var(--mutedFg)] leading-relaxed border-t border-[var(--border)] pt-4 mt-2" data-i18n={`faq.items.${i}.a`}>
+              Answer {i + 1}
+            </div>
+          </details>
+        ))}
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-[var(--border)] bg-[var(--bgElevated)]">
+      <div class="mx-auto max-w-6xl px-4 py-12">
+        <div class="grid md:grid-cols-3 gap-8 mb-8">
+          <div>
+            <div class="flex items-center gap-3 mb-4">
+              <img src={logoUrl} alt="Aliento" class="h-10 w-10 rounded-lg" />
+              <span class="font-semibold text-xl" data-i18n="title">Aliento Pay</span>
+            </div>
+            <p class="text-sm text-[var(--mutedFg)] leading-relaxed" data-i18n="footer.tagline">
+              Aliento is a community initiative on the Hive blockchain.
+            </p>
+          </div>
+
+          <div>
+            <h3 class="font-semibold mb-4">Links</h3>
+            <nav class="flex flex-col gap-3">
+              <a href="#" class="text-sm text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors" data-i18n="footer.links.about">About</a>
+              <a href="/docs" class="text-sm text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors" data-i18n="footer.links.docs">Docs</a>
+              <a href="#" class="text-sm text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors" data-i18n="footer.links.terms">Terms</a>
+              <a href="#" class="text-sm text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors" data-i18n="footer.links.privacy">Privacy</a>
+            </nav>
+          </div>
+
+          <div>
+            <h3 class="font-semibold mb-4">Community</h3>
+            <nav class="flex flex-col gap-3">
+              <a href="https://peakd.com/@aliento" target="_blank" rel="noopener noreferrer" class="text-sm text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22C6.486 22 2 17.514 2 12S6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/>
+                </svg>
+                PeakD
+              </a>
+              <a href="https://twitter.com/aliento" target="_blank" rel="noopener noreferrer" class="text-sm text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                </svg>
+                X / Twitter
+              </a>
+            </nav>
+          </div>
+        </div>
+
+        <div class="pt-8 border-t border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-[var(--mutedFg)]">
+          <span data-i18n-year="footer.copyright">© {currentYear} Aliento</span>
+          <div class="flex items-center gap-2">
+            <span>Built with</span>
+            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+            </svg>
+            <span>on Hive</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
 </Layout>
+
+<script define:vars={{ translations, currentYear }}>
+  // Language switching functionality
+  let currentLang = localStorage.getItem('lang') || 'en';
+
+  // Function to get nested translation
+  function getTranslation(key) {
+    const keys = key.split('.');
+    let value = translations[currentLang];
+
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return key;
+      }
+    }
+
+    return typeof value === 'string' ? value : key;
+  }
+
+  // Function to update all translations on the page
+  function updateTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      el.textContent = getTranslation(key);
+    });
+
+    // Update copyright with year
+    document.querySelectorAll('[data-i18n-year]').forEach(el => {
+      const key = el.getAttribute('data-i18n-year');
+      el.textContent = getTranslation(key).replace('{year}', currentYear);
+    });
+
+    // Update language buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      const lang = btn.getAttribute('data-lang');
+      if (lang === currentLang) {
+        btn.className = 'lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-anakiwa-500 text-[var(--primary-contrast)]';
+      } else {
+        btn.className = 'lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-[var(--mutedFg)] hover:text-[var(--fg)]';
+      }
+    });
+  }
+
+  // Initialize translations on page load
+  updateTranslations();
+
+  // Add click handlers to language buttons
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      currentLang = btn.getAttribute('data-lang');
+      localStorage.setItem('lang', currentLang);
+      updateTranslations();
+    });
+  });
+</script>
+
+<style>
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .7;
+    }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+</style>

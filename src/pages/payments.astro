@@ -3,6 +3,8 @@ import Layout from '../layouts/Layout.astro';
 import Header from '../ui/components/header.astro';
 import PaymentHero from '../ui/components/PaymentHero.astro';
 import PaymentsList from '../ui/components/PaymentsList.astro';
+import MemoSettings from '../ui/components/MemoSettings.astro';
+import BrandCard from '../ui/base/BrandCard.astro';
 import { requireAuthentication } from '../middleware';
 import { protectedGetCurationStats } from '../lib/auth/protected-functions';
 import type { Payment } from '../domain/models/Payment';
@@ -70,21 +72,26 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
     window.i18n = translations;
   </script>
 
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+  <div class="min-h-screen bg-[var(--bg)]">
     {authenticatedUser && <Header username={authenticatedUser} />}
     <main class="container mx-auto px-4 py-8">
       <PaymentHero />
+
+      <!-- Memo Settings Component -->
+      <BrandCard class="mb-8">
+        <MemoSettings />
+      </BrandCard>
 
       <!-- Contenedor dinámico que se actualizará desde JavaScript -->
       <div id="payments-content">
         <div class="max-w-2xl mx-auto">
           <div
-            class="bg-gradient-to-r from-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-blue-500/20 rounded-xl p-8 text-center"
+            class="bg-anakiwa-900/10 backdrop-blur-sm border border-anakiwa-500/20 rounded-xl p-8 text-center"
           >
             <div
-              class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4"
+              class="w-16 h-16 bg-anakiwa-500/20 rounded-full flex items-center justify-center mx-auto mb-4"
             >
-              <svg class="w-8 h-8 text-blue-400 animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg class="w-8 h-8 text-anakiwa-400 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle
                   class="opacity-25"
                   cx="12"
@@ -99,8 +106,8 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
                 ></path>
               </svg>
             </div>
-            <h3 class="text-xl font-bold text-blue-400 mb-2">{t('payments.loadingPayments')}</h3>
-            <p class="text-blue-300 mb-6">{t('payments.processingData')}</p>
+            <h3 class="text-xl font-bold text-anakiwa-400 mb-2">{t('payments.loadingPayments')}</h3>
+            <p class="text-anakiwa-300 mb-6">{t('payments.processingData')}</p>
           </div>
         </div>
       </div>
@@ -234,7 +241,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
             </div>
             <h3 class="text-xl font-bold text-amber-400 mb-2">${window.i18n.errorTitle}</h3>
             <p class="text-amber-300 mb-6">${message}</p>
-            <a href="/calculate" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
+            <a href="/calculate" class="inline-flex items-center gap-2 bg-gradient-to-r from-anakiwa-500 to-anakiwa-600 hover:from-anakiwa-600 hover:to-anakiwa-700 text-[var(--primary-contrast)] font-medium px-6 py-3 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg">
               <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
@@ -246,7 +253,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
     }
 
     // Variable global para el memo template
-    let customMemoTemplate = 'Pago de curación {period} - Aliento.pay';
+    let customMemoTemplate = window.i18n.memo.defaults.basic;
 
     // Función para reemplazar variables en el memo
     function replaceMemoVariables(template, payment, paymentData) {
@@ -285,23 +292,23 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
       const paymentItemsHTML = payments
         .map(
           (payment, index) => `
-        <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50 hover:bg-gray-700/50 transition-colors">
+        <div class="bg-[var(--bg)] rounded-lg p-4 border border-[var(--border)] hover:bg-anakiwa-900/10 transition-colors">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div class="relative w-8 h-8" data-username="${payment.to}">
-                <div class="avatar-fallback w-8 h-8 bg-blue-500/20 rounded-full flex items-center justify-center">
-                  <span class="text-blue-400 text-sm font-bold">${index + 1}</span>
+                <div class="avatar-fallback w-8 h-8 bg-anakiwa-500/20 rounded-full flex items-center justify-center">
+                  <span class="text-anakiwa-400 text-sm font-bold">${index + 1}</span>
                 </div>
                 <div class="avatar-img absolute inset-0"></div>
               </div>
               <div>
-                <div class="font-medium text-white">@${payment.to}</div>
-                <div class="text-xs text-gray-400 truncate max-w-xs">${payment.memo}</div>
+                <div class="font-medium text-[var(--fg)]">@${payment.to}</div>
+                <div class="text-xs text-[var(--mutedFg)] truncate max-w-xs">${payment.memo}</div>
               </div>
             </div>
             <div class="text-right">
-              <div class="font-bold text-yellow-400">${payment.amount.toFixed(3)} HIVE</div>
-              <div class="text-xs text-gray-400 capitalize">${payment.status}</div>
+              <div class="font-bold text-anakiwa-400">${payment.amount.toFixed(3)} HIVE</div>
+              <div class="text-xs text-[var(--mutedFg)] capitalize">${payment.status}</div>
             </div>
           </div>
         </div>
@@ -311,37 +318,37 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
 
       content.innerHTML = `
         <!-- Memo Customization Section -->
-        <div class="bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6 mb-6">
+        <div class="bg-[var(--bgElevated)] backdrop-blur-sm border border-[var(--border)] rounded-xl p-6 mb-6">
           <div class="flex items-start gap-3 mb-4">
-            <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-10 h-10 bg-anakiwa-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-anakiwa-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
               </svg>
             </div>
             <div class="flex-1">
-              <h3 class="text-lg font-bold text-white mb-2">${window.i18n.memo.title}</h3>
-              <p class="text-sm text-gray-300 mb-4">
+              <h3 class="text-lg font-bold text-[var(--fg)] mb-2">${window.i18n.memo.title}</h3>
+              <p class="text-sm text-[var(--mutedFg)] mb-4">
                 ${window.i18n.memo.description}
-                <span class="text-purple-300 font-mono text-xs">{period}</span>,
-                <span class="text-purple-300 font-mono text-xs">{username}</span>,
-                <span class="text-purple-300 font-mono text-xs">{amount}</span>,
-                <span class="text-purple-300 font-mono text-xs">{date}</span>
+                <span class="text-anakiwa-300 font-mono text-xs">{period}</span>,
+                <span class="text-anakiwa-300 font-mono text-xs">{username}</span>,
+                <span class="text-anakiwa-300 font-mono text-xs">{amount}</span>,
+                <span class="text-anakiwa-300 font-mono text-xs">{date}</span>
               </p>
 
               <div class="space-y-3">
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">${window.i18n.memo.templateLabel}</label>
+                  <label class="block text-sm font-medium text-[var(--mutedFg)] mb-2">${window.i18n.memo.templateLabel}</label>
                   <div class="flex gap-2">
                     <input
                       type="text"
                       id="memo-template-input"
                       value="${customMemoTemplate}"
-                      class="flex-1 px-4 py-2 bg-gray-800/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      class="flex-1 px-4 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--fg)] placeholder-[var(--mutedFg)] focus:outline-none focus:ring-2 focus:ring-anakiwa-500 focus:border-transparent"
                       placeholder="${window.i18n.memo.templatePlaceholder}"
                     />
                     <button
                       id="update-memo-btn"
-                      class="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center gap-2"
+                      class="px-6 py-2 bg-gradient-to-r from-anakiwa-500 to-anakiwa-600 hover:from-anakiwa-600 hover:to-anakiwa-700 text-[var(--primary-contrast)] font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg flex items-center gap-2"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -353,27 +360,27 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
 
                 <!-- Templates predefinidos -->
                 <div>
-                  <label class="block text-sm font-medium text-gray-300 mb-2">${window.i18n.memo.quickTemplates}</label>
+                  <label class="block text-sm font-medium text-[var(--mutedFg)] mb-2">${window.i18n.memo.quickTemplates}</label>
                   <div class="flex flex-wrap gap-2">
-                    <button class="memo-template-btn px-3 py-1 bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 text-xs rounded-lg transition-colors" data-template="${window.i18n.memo.defaults.basic}">
+                    <button class="memo-template-btn px-3 py-1 bg-[var(--bg)] hover:bg-anakiwa-900/20 border border-[var(--border)] hover:border-anakiwa-500/50 text-[var(--fg)] text-xs rounded-lg transition-colors" data-template="${window.i18n.memo.defaults.basic}">
                       ${window.i18n.memo.templates.default}
                     </button>
-                    <button class="memo-template-btn px-3 py-1 bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 text-xs rounded-lg transition-colors" data-template="${window.i18n.memo.defaults.emoji}">
+                    <button class="memo-template-btn px-3 py-1 bg-[var(--bg)] hover:bg-anakiwa-900/20 border border-[var(--border)] hover:border-anakiwa-500/50 text-[var(--fg)] text-xs rounded-lg transition-colors" data-template="${window.i18n.memo.defaults.emoji}">
                       ${window.i18n.memo.templates.withEmoji}
                     </button>
-                    <button class="memo-template-btn px-3 py-1 bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 text-xs rounded-lg transition-colors" data-template="${window.i18n.memo.defaults.detailed}">
+                    <button class="memo-template-btn px-3 py-1 bg-[var(--bg)] hover:bg-anakiwa-900/20 border border-[var(--border)] hover:border-anakiwa-500/50 text-[var(--fg)] text-xs rounded-lg transition-colors" data-template="${window.i18n.memo.defaults.detailed}">
                       ${window.i18n.memo.templates.detailed}
                     </button>
-                    <button class="memo-template-btn px-3 py-1 bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 text-xs rounded-lg transition-colors" data-template="${window.i18n.memo.defaults.simple}">
+                    <button class="memo-template-btn px-3 py-1 bg-[var(--bg)] hover:bg-anakiwa-900/20 border border-[var(--border)] hover:border-anakiwa-500/50 text-[var(--fg)] text-xs rounded-lg transition-colors" data-template="${window.i18n.memo.defaults.simple}">
                       ${window.i18n.memo.templates.simple}
                     </button>
                   </div>
                 </div>
 
                 <!-- Preview -->
-                <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-600/30">
-                  <div class="text-xs text-gray-400 mb-1">${window.i18n.memo.preview}</div>
-                  <div class="text-sm text-white font-mono" id="memo-preview">
+                <div class="bg-anakiwa-900/10 rounded-lg p-3 border border-anakiwa-500/20">
+                  <div class="text-xs text-anakiwa-300 mb-1">${window.i18n.memo.preview}</div>
+                  <div class="text-sm text-[var(--fg)] font-mono" id="memo-preview">
                     ${payments.length > 0 ? payments[0].memo : window.i18n.memo.noPreview}
                   </div>
                 </div>
@@ -383,16 +390,16 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
         </div>
 
         <!-- Lista de Pagos -->
-        <div class="bg-gradient-to-r from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-600/30 rounded-xl p-6">
+        <div class="bg-[var(--bgElevated)] backdrop-blur-sm border border-[var(--border)] rounded-xl p-6">
           <div class="flex items-center justify-between mb-6">
-            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-              <svg class="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+            <h3 class="text-xl font-bold text-[var(--fg)] flex items-center gap-2">
+              <svg class="w-5 h-5 text-anakiwa-400" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
                 <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/>
               </svg>
               ${window.i18n.paymentList}
             </h3>
-            <div class="text-sm text-gray-400">
+            <div class="text-sm text-[var(--mutedFg)]">
               ${payments.length} ${window.i18n.transfers}
             </div>
           </div>
@@ -597,7 +604,10 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
 
     try {
       showNotification(
-        `Procesando lote ${batchIndex + 1}/${paymentBatches.length} (${batch.payments.length} usuarios)...`,
+        window.i18n.payments.notifications.batchProcessing
+          .replace('{current}', (batchIndex + 1).toString())
+          .replace('{total}', paymentBatches.length.toString())
+          .replace('{count}', batch.payments.length.toString()),
         'info'
       );
 
@@ -608,7 +618,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
           from: currentUser,
           to: payment.to,
           amount: `${payment.amount.toFixed(3)} HIVE`,
-          memo: payment.memo || 'Pago de curación - Aliento.pay',
+          memo: payment.memo || window.i18n.memo.defaults.basic.replace('{period}', ''),
         },
       ]);
 
@@ -618,7 +628,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
       // Usar directamente requestBroadcast de Keychain
       const result = await new Promise((resolve, reject) => {
         if (!window.hive_keychain) {
-          reject(new Error('Hive Keychain no está disponible'));
+          reject(new Error(window.i18n.payments.notifications.keychainNotAvailable));
           return;
         }
 
@@ -626,7 +636,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
           if (response.success) {
             resolve(response);
           } else {
-            reject(new Error(response.message || response.error || 'Error desconocido'));
+            reject(new Error(response.message || response.error || window.i18n.payments.notifications.unknownError));
           }
         });
       });
@@ -642,9 +652,11 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
         });
 
         showNotification(
-          `✅ Lote ${batchIndex + 1} completado exitosamente!\n` +
-            `💰 ${batch.totalAmount} HIVE distribuidos entre ${batch.payments.length} usuarios\n` +
-            `🔗 TX: ${result.result?.id}`,
+          window.i18n.payments.notifications.batchCompleted
+            .replace('{index}', (batchIndex + 1).toString())
+            .replace('{amount}', batch.totalAmount)
+            .replace('{count}', batch.payments.length.toString())
+            .replace('{txId}', result.result?.id || ''),
           'success'
         );
 
@@ -665,7 +677,10 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
         batch.status = 'pending'; // Volver a estado pendiente para poder reintentarlo
         batch.result = { canceled: true };
 
-        showNotification(`Lote ${batchIndex + 1} cancelado por el usuario`, 'info');
+        showNotification(
+          window.i18n.payments.notifications.batchCanceled.replace('{index}', (batchIndex + 1).toString()),
+          'info'
+        );
         batchPaymentInProgress = false;
         return false; // Detener el proceso
       } else {
@@ -680,7 +695,12 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
           payment.error = error.message;
         });
 
-        showNotification(`❌ Error en lote ${batchIndex + 1}: ${error.message}`, 'error');
+        showNotification(
+          window.i18n.payments.notifications.batchError
+            .replace('{index}', (batchIndex + 1).toString())
+            .replace('{error}', error.message),
+          'error'
+        );
 
         batchResults.push({
           batchIndex,
@@ -700,18 +720,18 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
   // 🆕 Función principal para ejecutar pagos por lotes
   async function executePaymentsByBatches(startFromBatch = 0) {
     if (batchPaymentInProgress) {
-      showNotification('Ya hay un proceso de pagos por lotes en curso', 'warning');
+      showNotification(window.i18n.payments.notifications.alreadyInProgress, 'warning');
       return;
     }
 
     if (!currentUser) {
-      showNotification('No hay usuario autenticado', 'error');
+      showNotification(window.i18n.payments.notifications.noUser, 'error');
       return;
     }
 
     const payments = window.currentPayments || [];
     if (payments.length === 0) {
-      showNotification('No hay pagos para ejecutar', 'warning');
+      showNotification(window.i18n.payments.notifications.noPayments, 'warning');
       return;
     }
 
@@ -726,8 +746,10 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
     currentBatchIndex = startFromBatch;
 
     showNotification(
-      `🚀 Iniciando pagos por lotes desde el lote ${startFromBatch + 1}/${paymentBatches.length}\n` +
-        `📦 ${BATCH_SIZE} usuarios por lote`,
+      window.i18n.payments.notifications.batchStarting
+        .replace('{start}', (startFromBatch + 1).toString())
+        .replace('{total}', paymentBatches.length.toString())
+        .replace('{size}', BATCH_SIZE.toString()),
       'info'
     );
 
@@ -762,23 +784,23 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
       .filter(r => r.success)
       .reduce((sum, r) => sum + parseFloat(r.amount), 0);
 
-    let summaryMessage = `🎉 Proceso de lotes completado!\n`;
-
-    if (successfulBatches > 0) {
-      summaryMessage += `✅ ${successfulBatches} lotes exitosos (${totalSuccess} pagos)\n`;
-      summaryMessage += `💰 Total enviado: ${totalAmount.toFixed(3)} HIVE\n`;
-    }
+    let summaryMessage = window.i18n.payments.notifications.allCompleted
+      .replace('{successful}', successfulBatches.toString())
+      .replace('{payments}', totalSuccess.toString())
+      .replace('{amount}', totalAmount.toFixed(3));
 
     if (failedBatches > 0) {
-      summaryMessage += `❌ ${failedBatches} lotes fallidos\n`;
+      summaryMessage += window.i18n.payments.notifications.withFailures
+        .replace('{failed}', failedBatches.toString());
     }
 
     if (canceledBatches > 0) {
-      summaryMessage += `⏹️ ${canceledBatches} lotes cancelados\n`;
+      summaryMessage += window.i18n.payments.notifications.withCanceled
+        .replace('{canceled}', canceledBatches.toString());
     }
 
     if (canceledBatches > 0 || failedBatches > 0) {
-      summaryMessage += `ℹ️ Puedes usar "Continuar lotes" para reanudar`;
+      summaryMessage += window.i18n.payments.notifications.canContinue;
     }
 
     showNotification(
@@ -803,7 +825,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
 
       executePaymentsByBatches(lastPendingBatch);
     } else {
-      showNotification('No hay lotes pendientes para continuar', 'info');
+      showNotification(window.i18n.payments.notifications.noPendingBatches, 'info');
     }
   }
 
@@ -884,17 +906,20 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
   // Función para ejecutar pagos usando el servicio de múltiples transferencias
   async function executePayments(paymentsToExecute, groupName = 'todos los pagos') {
     if (!currentUser) {
-      showNotification('No hay usuario autenticado', 'error');
+      showNotification(window.i18n.payments.notifications.noUser, 'error');
       return;
     }
 
     if (!paymentsToExecute || paymentsToExecute.length === 0) {
-      showNotification('No hay pagos para ejecutar', 'warning');
+      showNotification(window.i18n.payments.notifications.noPayments, 'warning');
       return;
     }
 
     try {
-      showNotification(`Iniciando ${paymentsToExecute.length} pagos con Keychain...`, 'info');
+      showNotification(
+        window.i18n.payments.notifications.initiating.replace('{count}', paymentsToExecute.length.toString()),
+        'info'
+      );
 
       // Construir operaciones para requestBroadcast
       const operations = paymentsToExecute.map(payment => [
@@ -903,7 +928,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
           from: currentUser,
           to: payment.to,
           amount: `${payment.amount.toFixed(3)} HIVE`,
-          memo: payment.memo || 'Pago de curación - Aliento.pay',
+          memo: payment.memo || window.i18n.memo.defaults.basic.replace('{period}', ''),
         },
       ]);
 
@@ -916,7 +941,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
       // Usar directamente requestBroadcast de Keychain
       const result = await new Promise((resolve, reject) => {
         if (!window.hive_keychain) {
-          reject(new Error('Hive Keychain no está disponible'));
+          reject(new Error(window.i18n.payments.notifications.keychainNotAvailable));
           return;
         }
 
@@ -924,7 +949,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
           if (response.success) {
             resolve(response);
           } else {
-            reject(new Error(response.message || response.error || 'Error desconocido'));
+            reject(new Error(response.message || response.error || window.i18n.payments.notifications.unknownError));
           }
         });
       });
@@ -933,9 +958,10 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
         const totalAmount = paymentsToExecute.reduce((sum, p) => sum + p.amount, 0);
 
         showNotification(
-          `¡Éxito! ${groupName} ejecutados correctamente.\n` +
-            `💰 Total: ${totalAmount.toFixed(3)} HIVE\n` +
-            `🔗 TX ID: ${result.result?.id}`,
+          window.i18n.payments.notifications.success
+            .replace('{name}', groupName)
+            .replace('{amount}', totalAmount.toFixed(3))
+            .replace('{txId}', result.result?.id || ''),
           'success'
         );
 
@@ -952,11 +978,16 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
       if (error && error.message && error.message.includes('Request was canceled by the user')) {
         // Cancelación normal del usuario - no es un error
         console.log(`👤 [PAYMENTS] Usuario canceló la operación`);
-        showNotification('Operación cancelada por el usuario', 'info');
+        showNotification(window.i18n.payments.notifications.userCanceled, 'info');
       } else {
         // Error real
         console.error(`❌ [PAYMENTS] Error real:`, error);
-        showNotification(`Error ejecutando ${groupName}: ${error.message}`, 'error');
+        showNotification(
+          window.i18n.payments.notifications.error
+            .replace('{name}', groupName)
+            .replace('{error}', error.message),
+          'error'
+        );
       }
     }
   }
@@ -991,7 +1022,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
     currentUser = localStorage.getItem('authenticated_user');
 
     if (!currentUser) {
-      showNotification('No hay usuario autenticado. Redirigiendo...', 'warning');
+      showNotification(window.i18n.payments.notifications.noUserRedirecting, 'warning');
       setTimeout(() => (window.location.href = '/'), 2000);
       return;
     }
@@ -1060,7 +1091,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
           currentBatchIndex = 0;
           batchPaymentInProgress = false;
           updateBatchProgress();
-          showNotification('Lotes reseteados', 'info');
+          showNotification(window.i18n.payments.notifications.batchesReset, 'info');
         });
       }
     }

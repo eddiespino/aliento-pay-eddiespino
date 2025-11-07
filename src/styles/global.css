@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 🎨 ALIENTO LANDING PAGE THEME TOKENS */
+:root {
+  /* Background colors */
+  --bg: #0b1220;
+  --bgElevated: #0f172a;
+
+  /* Text colors */
+  --fg: #e6f6ff;
+  --mutedFg: #a8c7d8;
+
+  /* Brand colors */
+  --primary: #09b1ee;
+  --primary-contrast: #04131b;
+  --accent: #33c8fd;
+
+  /* Border colors */
+  --border: #133047;
+}
+
+/* Force dark mode */
+html {
+  color-scheme: dark;
+}
+
 /* 🎨 DESIGN SYSTEM COMPONENTS - Basado en el login exitoso */
 @layer components {
   /* 🏗️ LAYOUT COMPONENTS */

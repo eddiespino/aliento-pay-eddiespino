@@ -255,11 +255,14 @@
     "notifications": {
       "noUser": "No authenticated user",
       "noPayments": "No payments to execute",
+      "noUserRedirecting": "No authenticated user. Redirecting...",
       "initiating": "Initiating {count} payments with Keychain...",
       "batchProcessing": "Processing batch {current}/{total} ({count} users)...",
+      "batchStarting": "🚀 Starting batch payments from batch {start}/{total}\n📦 {size} users per batch",
       "batchCompleted": "Batch {index} completed successfully!\n💰 {amount} HIVE distributed among {count} users\n🔗 TX: {txId}",
       "batchCanceled": "Batch {index} canceled by user",
       "batchError": "Error in batch {index}: {error}",
+      "batchesReset": "Batches reset",
       "allCompleted": "Batch process completed!\n✅ {successful} successful batches ({payments} payments)\n💰 Total sent: {amount} HIVE",
       "withFailures": "\n❌ {failed} failed batches",
       "withCanceled": "\n⏹️ {canceled} canceled batches",
@@ -268,7 +271,9 @@
       "userCanceled": "Operation canceled by user",
       "error": "Error executing {name}: {error}",
       "alreadyInProgress": "A batch payment process is already in progress",
-      "noPendingBatches": "No pending batches to continue"
+      "noPendingBatches": "No pending batches to continue",
+      "keychainNotAvailable": "Hive Keychain is not available",
+      "unknownError": "Unknown error"
     },
     "status": {
       "pending": "pending",
@@ -280,5 +285,179 @@
     },
     "noPaymentsTitle": "No Payments",
     "noPaymentsDescription": "There are no payments to display in the list"
+  },
+  "landing": {
+    "eyebrow": "Delegate Hive Power. Support creators. Earn flexibly.",
+    "title": "Aliento Pay",
+    "subtitle": "Delegate to Aliento and choose how you get paid: HIVE, HBD, Hive Power — or donate to boost the project.",
+    "ctaPrimary": "Delegate now",
+    "ctaSecondary": "How it works",
+    "signIn": "Sign in with Hive Keychain",
+    "how": {
+      "title": "How it works",
+      "steps": [
+        "Sign in with Hive Keychain",
+        "Choose amount to delegate",
+        "Pick payout preference",
+        "Confirm & track rewards"
+      ]
+    },
+    "why": {
+      "title": "Why delegate with Aliento",
+      "cards": [
+        {
+          "h": "Transparent payouts",
+          "p": "On-chain distributions with exportable reports."
+        },
+        {
+          "h": "Flexible rewards",
+          "p": "Get HIVE, HBD, HP—or donate your share."
+        },
+        {
+          "h": "Community impact",
+          "p": "Fund curation, education, and onboarding."
+        }
+      ]
+    },
+    "faq": {
+      "title": "FAQ",
+      "items": [
+        {
+          "q": "What is Aliento Pay?",
+          "a": "A portal to delegate HP to Aliento and choose how you receive rewards."
+        },
+        {
+          "q": "How are payouts calculated?",
+          "a": "Based on delegation, pool performance, and your preference. Estimates are informational."
+        },
+        {
+          "q": "Can I opt out of payouts?",
+          "a": "Yes—select Donate to exclude yourself and support the project directly."
+        },
+        {
+          "q": "Is my key required?",
+          "a": "No private keys are stored. All actions are signed via Hive Keychain."
+        },
+        {
+          "q": "Can I change preferences later?",
+          "a": "Yes, for future payout runs."
+        }
+      ]
+    },
+    "footer": {
+      "copyright": "© {year} Aliento",
+      "tagline": "Aliento is a community initiative on the Hive blockchain.",
+      "links": {
+        "about": "About",
+        "docs": "Docs",
+        "terms": "Terms",
+        "privacy": "Privacy"
+      }
+    }
+  },
+  "delegate": {
+    "title": "Delegate to Aliento - Calculate Your Earnings",
+    "pageTitle": "Delegation Calculator",
+    "subtitle": "Calculate how much you can earn by delegating Hive Power to @aliento",
+    "description": "Delegate your Hive Power to @aliento and choose how to receive your rewards. Support Spanish content curation while earning.",
+    "calculator": {
+      "title": "Earnings Calculator",
+      "hpAmount": "HP Amount to Delegate",
+      "hpPlaceholder": "Enter HP amount",
+      "minimumHP": "Minimum: 1 HP",
+      "currentAPR": "Current APR: {apr}%",
+      "estimatedEarnings": "Estimated Earnings",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "yearly": "Yearly",
+      "inHive": "in HIVE",
+      "inHbd": "in HBD",
+      "calculating": "Calculating..."
+    },
+    "preferences": {
+      "title": "Payment Preference",
+      "description": "Choose how you want to receive your curation rewards",
+      "options": {
+        "hive": {
+          "title": "Receive HIVE",
+          "description": "Get your earnings in liquid HIVE"
+        },
+        "hbd": {
+          "title": "Receive HBD",
+          "description": "Get your earnings in HBD (Hive Backed Dollars)"
+        },
+        "hp": {
+          "title": "Receive Hive Power",
+          "description": "Automatically increase your Hive Power"
+        },
+        "donate": {
+          "title": "Donate",
+          "description": "Donate your earnings to support the Aliento project"
+        }
+      },
+      "selected": "Selected",
+      "savePreference": "Save Preference"
+    },
+    "delegation": {
+      "title": "Make Delegation",
+      "currentDelegation": "Current Delegation",
+      "noDelegation": "You don't have an active delegation to @aliento",
+      "delegateButton": "Delegate {amount} HP",
+      "updateDelegation": "Update Delegation",
+      "connectFirst": "Connect with Keychain first",
+      "minimumRequired": "Minimum 1 HP required"
+    },
+    "status": {
+      "notConnected": "Not connected",
+      "connect": "Connect with Keychain",
+      "connected": "Connected as @{username}",
+      "loadingDelegation": "Loading current delegation...",
+      "savingPreference": "Saving preference...",
+      "delegating": "Processing delegation..."
+    },
+    "notifications": {
+      "preferenceSaved": "✅ Preference saved successfully on blockchain",
+      "preferenceError": "❌ Error saving preference: {error}",
+      "delegationSuccess": "✅ Delegation successful!\n💪 {amount} HP delegated to @aliento",
+      "delegationError": "❌ Delegation error: {error}",
+      "keychainRequired": "Hive Keychain is required to continue",
+      "invalidAmount": "Please enter a valid amount (minimum 1 HP)",
+      "loadingPreference": "Loading your saved preference...",
+      "preferenceLoaded": "Preference loaded from blockchain"
+    },
+    "info": {
+      "title": "How It Works",
+      "steps": [
+        "Calculate your potential earnings using the calculator",
+        "Choose how you want to receive your rewards",
+        "Connect your Hive Keychain wallet",
+        "Delegate the amount of HP you want (minimum 1 HP)",
+        "Your preferences are saved on the blockchain",
+        "Receive your rewards according to your choice"
+      ],
+      "note": "Note: Estimated earnings are approximate and may vary based on pool performance and market conditions."
+    },
+    "benefits": {
+      "title": "Benefits of Delegating",
+      "items": [
+        {
+          "title": "Passive Earnings",
+          "description": "Earn HIVE, HBD, or automatically increase your HP"
+        },
+        {
+          "title": "Support Quality Content",
+          "description": "Help curate the best Spanish content"
+        },
+        {
+          "title": "Flexible and Transparent",
+          "description": "Change your preferences anytime, everything on-chain"
+        },
+        {
+          "title": "No Risk",
+          "description": "You can withdraw your delegation at any time"
+        }
+      ]
+    }
   }
 }
