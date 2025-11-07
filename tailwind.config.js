@@ -5,6 +5,20 @@ module.exports = {
     extend: {
       // 🎨 Design tokens extraídos del login exitoso
       colors: {
+        // Anakiwa palette (Aliento branding)
+        anakiwa: {
+          50: '#f0faff',
+          100: '#dff3ff',
+          200: '#b8e9ff',
+          300: '#82dcff',
+          400: '#33c8fd',
+          500: '#09b1ee',
+          600: '#008ecc',
+          700: '#0071a5',
+          800: '#046088',
+          900: '#0a4f70',
+          950: '#06324b',
+        },
         brand: {
           // Slate palette (base del sistema)
           slate: {

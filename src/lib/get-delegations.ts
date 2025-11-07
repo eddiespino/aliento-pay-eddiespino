@@ -1639,17 +1639,71 @@ const OPERATION_CACHE_DURATION = 60 * 60 * 1000; // 60 minutos
  */
 
 /**
- * Función principal para obtener delegaciones con detalles completos (para dashboard)
+ * 🆕 Función optimizada para obtener delegaciones usando HafSQL API
+ * Esta API es mucho más rápida y ya incluye el HP calculado
  */
 export async function getAllDelegationsWithDetails(
   username: string
 ): Promise<DelegationWithDetails[]> {
   try {
-    console.log(`🚀 Obteniendo delegaciones completas para @${username}...`);
+    console.log(`🚀 [NEW API] Obteniendo delegaciones para @${username} desde HafSQL...`);
+
+    // Aumentar el límite a 10000 para obtener todas las delegaciones
+    const response = await fetch(`https://hafsql-api.mahdiyari.info/delegations/${username}/incoming?limit=10000`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log(`📊 [NEW API] Recibidas ${data.length} delegaciones`);
+
+    // Log las primeras 5 para debug
+    if (data.length > 0) {
+      console.log('📅 Primeras 5 delegaciones (más recientes):');
+      data.slice(0, 5).forEach((del: any, idx: number) => {
+        console.log(`  ${idx + 1}. @${del.delegator} - ${del.hp_equivalent} HP - ${del.timestamp}`);
+      });
+    }
+
+    // Mapear al formato DelegationWithDetails
+    const delegations: DelegationWithDetails[] = data.map((del: any) => ({
+      delegator: del.delegator,
+      amount: del.vests, // Los vests originales
+      operation_id: '', // No disponible en esta API, pero no es crítico
+      block_num: 0, // No disponible, pero no es crítico
+      hpAmount: parseFloat(del.hp_equivalent), // HP ya calculado!
+      timestamp: del.timestamp,
+      date: new Date(del.timestamp),
+    }));
+
+    console.log(`✅ [NEW API] ${delegations.length} delegaciones procesadas exitosamente`);
+
+    // Log summary
+    const totalHP = delegations.reduce((sum, d) => sum + (d.hpAmount || 0), 0);
+    console.log(`💰 [NEW API] Total HP delegado: ${totalHP.toFixed(3)} HP`);
+
+    return delegations;
+  } catch (error) {
+    console.error('❌ [NEW API] Error obteniendo delegaciones:', error);
+    // Fallback to old method if new API fails
+    console.log('🔄 Intentando con API legacy...');
+    return getAllDelegationsWithDetailsLegacy(username);
+  }
+}
+
+/**
+ * Función legacy (respaldo) usando el método anterior
+ */
+async function getAllDelegationsWithDetailsLegacy(
+  username: string
+): Promise<DelegationWithDetails[]> {
+  try {
+    console.log(`🚀 [LEGACY] Obteniendo delegaciones completas para @${username}...`);
 
     // Obtener delegaciones básicas
     const basicDelegations = await getAllDelegationsIncoming(username);
-    console.log(`📊 Encontradas ${basicDelegations.length} delegaciones básicas`);
+    console.log(`📊 [LEGACY] Encontradas ${basicDelegations.length} delegaciones básicas`);
 
     if (basicDelegations.length === 0) {
       return [];
@@ -1657,7 +1711,7 @@ export async function getAllDelegationsWithDetails(
 
     // Convertir a HP
     const delegationsWithHP = await convertDelegationsToHP(basicDelegations);
-    console.log(`💰 Convertidas ${delegationsWithHP.length} delegaciones a HP`);
+    console.log(`💰 [LEGACY] Convertidas ${delegationsWithHP.length} delegaciones a HP`);
 
     // Convertir al formato esperado
     const delegationsWithDetails: DelegationWithDetails[] = delegationsWithHP.map(delegation => ({
@@ -1665,10 +1719,10 @@ export async function getAllDelegationsWithDetails(
       // Inicializar campos opcionales
     }));
 
-    console.log(`✅ Preparadas ${delegationsWithDetails.length} delegaciones para dashboard`);
+    console.log(`✅ [LEGACY] Preparadas ${delegationsWithDetails.length} delegaciones para dashboard`);
     return delegationsWithDetails;
   } catch (error) {
-    console.error('❌ Error en getAllDelegationsWithDetails:', error);
+    console.error('❌ [LEGACY] Error en getAllDelegationsWithDetails:', error);
     return [];
   }
 }

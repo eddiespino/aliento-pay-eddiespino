@@ -2,7 +2,7 @@
 /**
  * 📝 MEMO SETTINGS COMPONENT
  *
- * Allows users to customize payment memo template from the dashboard
+ * Simplified memo customization for payment templates
  * Saves to localStorage and passes to calculate/payments pages
  */
 
@@ -12,10 +12,10 @@ const currentLocale = getCurrentLocale(Astro);
 const t = (key: string) => getTranslation(currentLocale, key);
 ---
 
-<div class="memo-settings bg-gradient-to-r from-purple-900/30 to-blue-900/30 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
-  <div class="flex items-start gap-3">
-    <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-      <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<div class="memo-settings bg-[var(--bgElevated)] border border-[var(--border)] rounded-xl p-6">
+  <div class="flex items-start gap-4">
+    <div class="w-10 h-10 bg-anakiwa-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
+      <svg class="w-5 h-5 text-anakiwa-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
@@ -26,67 +26,64 @@ const t = (key: string) => getTranslation(currentLocale, key);
     </div>
 
     <div class="flex-1">
-      <h3 class="text-lg font-bold text-white mb-2">{t('memo.title')}</h3>
-      <p class="text-sm text-gray-300 mb-4">
+      <h3 class="text-lg font-bold text-[var(--fg)] mb-2">{t('memo.title')}</h3>
+      <p class="text-sm text-[var(--mutedFg)] mb-4">
         {t('memo.description')}
-        <span class="text-purple-300 font-mono text-xs">{'{period}'}</span>,
-        <span class="text-purple-300 font-mono text-xs">{'{username}'}</span>,
-        <span class="text-purple-300 font-mono text-xs">{'{amount}'}</span>,
-        <span class="text-purple-300 font-mono text-xs">{'{date}'}</span>
+        <span class="text-anakiwa-300 font-mono text-xs">{'{period}'}</span>,
+        <span class="text-anakiwa-300 font-mono text-xs">{'{username}'}</span>,
+        <span class="text-anakiwa-300 font-mono text-xs">{'{amount}'}</span>,
+        <span class="text-anakiwa-300 font-mono text-xs">{'{date}'}</span>
       </p>
 
-      <div class="space-y-3">
-        <!-- Memo Template Input -->
-        <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">{t('memo.templateLabel')}</label>
-          <div class="flex gap-2">
-            <input
-              type="text"
-              id="dashboard-memo-template"
-              class="flex-1 px-4 py-2 bg-gray-800/50 border border-gray-600/50 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-              placeholder={t('memo.templatePlaceholder')}
-            />
-            <button
-              id="save-memo-template"
-              class="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-sm flex items-center gap-2"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-                ></path>
-              </svg>
-              {t('common.save')}
-            </button>
-          </div>
+      <div class="space-y-4">
+        <!-- Memo Template Input with Save Button -->
+        <div class="flex gap-2">
+          <input
+            type="text"
+            id="dashboard-memo-template"
+            class="flex-1 px-4 py-3 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--fg)] placeholder-[var(--mutedFg)] focus:outline-none focus:ring-2 focus:ring-anakiwa-500 focus:border-transparent text-sm"
+            placeholder={t('memo.templatePlaceholder')}
+          />
+          <button
+            id="save-memo-template"
+            class="px-6 py-3 bg-anakiwa-500 hover:bg-anakiwa-600 text-[var(--primary-contrast)] font-medium rounded-lg transition-all duration-200 transform hover:scale-105 shadow-lg text-sm flex items-center gap-2"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
+              ></path>
+            </svg>
+            {t('common.save')}
+          </button>
         </div>
 
-        <!-- Quick Templates -->
+        <!-- Quick Templates (Simplified) -->
         <div>
-          <label class="block text-sm font-medium text-gray-300 mb-2">{t('memo.quickTemplates')}</label>
-          <div class="flex flex-wrap gap-2">
+          <label class="block text-sm font-medium text-[var(--mutedFg)] mb-2">{t('memo.quickTemplates')}</label>
+          <div class="grid grid-cols-2 gap-2">
             <button
-              class="memo-quick-template px-3 py-1.5 bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 text-xs rounded-lg transition-colors"
+              class="memo-quick-template px-3 py-2 bg-[var(--bg)] hover:bg-anakiwa-900/20 border border-[var(--border)] hover:border-anakiwa-500/50 text-[var(--fg)] text-xs rounded-lg transition-all"
               data-template={t('memo.defaults.basic')}
             >
               {t('memo.templates.default')}
             </button>
             <button
-              class="memo-quick-template px-3 py-1.5 bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 text-xs rounded-lg transition-colors"
+              class="memo-quick-template px-3 py-2 bg-[var(--bg)] hover:bg-anakiwa-900/20 border border-[var(--border)] hover:border-anakiwa-500/50 text-[var(--fg)] text-xs rounded-lg transition-all"
               data-template={t('memo.defaults.emoji')}
             >
               {t('memo.templates.withEmoji')}
             </button>
             <button
-              class="memo-quick-template px-3 py-1.5 bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 text-xs rounded-lg transition-colors"
+              class="memo-quick-template px-3 py-2 bg-[var(--bg)] hover:bg-anakiwa-900/20 border border-[var(--border)] hover:border-anakiwa-500/50 text-[var(--fg)] text-xs rounded-lg transition-all"
               data-template={t('memo.defaults.detailed')}
             >
               {t('memo.templates.detailed')}
             </button>
             <button
-              class="memo-quick-template px-3 py-1.5 bg-gray-700/50 hover:bg-gray-600/50 text-gray-200 text-xs rounded-lg transition-colors"
+              class="memo-quick-template px-3 py-2 bg-[var(--bg)] hover:bg-anakiwa-900/20 border border-[var(--border)] hover:border-anakiwa-500/50 text-[var(--fg)] text-xs rounded-lg transition-all"
               data-template={t('memo.defaults.simple')}
             >
               {t('memo.templates.simple')}
@@ -95,24 +92,11 @@ const t = (key: string) => getTranslation(currentLocale, key);
         </div>
 
         <!-- Preview -->
-        <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-600/30">
-          <div class="text-xs text-gray-400 mb-1">{t('memo.preview')}</div>
-          <div class="text-sm text-white font-mono" id="dashboard-memo-preview">
+        <div class="bg-anakiwa-900/10 rounded-lg p-3 border border-anakiwa-500/20">
+          <div class="text-xs text-anakiwa-300 mb-1">{t('memo.preview')}</div>
+          <div class="text-sm text-[var(--fg)] font-mono" id="dashboard-memo-preview">
             {t('memo.defaults.basic').replace('{period}', '30d')}
           </div>
-        </div>
-
-        <!-- Save as Default Toggle -->
-        <div class="flex items-center gap-2">
-          <input
-            type="checkbox"
-            id="save-as-default"
-            class="w-4 h-4 text-purple-600 bg-gray-700 border-gray-600 rounded focus:ring-purple-500 focus:ring-2"
-            checked
-          />
-          <label for="save-as-default" class="text-sm text-gray-300 cursor-pointer">
-            {t('memo.saveAsDefault')}
-          </label>
         </div>
       </div>
     </div>
@@ -131,7 +115,6 @@ const t = (key: string) => getTranslation(currentLocale, key);
       const templateInput = document.getElementById('dashboard-memo-template');
       const saveButton = document.getElementById('save-memo-template');
       const previewDiv = document.getElementById('dashboard-memo-preview');
-      const saveAsDefaultCheckbox = document.getElementById('save-as-default');
       const quickTemplateButtons = document.querySelectorAll('.memo-quick-template');
 
       if (!templateInput) return;
@@ -145,12 +128,9 @@ const t = (key: string) => getTranslation(currentLocale, key);
       saveButton?.addEventListener('click', () => {
         const template = templateInput.value.trim();
         if (template) {
-          if (saveAsDefaultCheckbox?.checked) {
-            localStorage.setItem(MEMO_TEMPLATE_KEY, template);
-            console.log('✅ Memo template saved as default:', template);
-          }
-
-          showNotification('Memo template saved!', 'success');
+          localStorage.setItem(MEMO_TEMPLATE_KEY, template);
+          console.log('✅ Memo template saved:', template);
+          showNotification('✅ Memo template saved!', 'success');
         }
       });
 
@@ -159,19 +139,15 @@ const t = (key: string) => getTranslation(currentLocale, key);
         updatePreview(e.target.value);
       });
 
-      // Quick templates
+      // Quick templates - automatically save when clicked
       quickTemplateButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
           const template = btn.getAttribute('data-template');
           if (template) {
             templateInput.value = template;
             updatePreview(template);
-
-            if (saveAsDefaultCheckbox?.checked) {
-              localStorage.setItem(MEMO_TEMPLATE_KEY, template);
-            }
-
-            showNotification('Template applied!', 'success');
+            localStorage.setItem(MEMO_TEMPLATE_KEY, template);
+            showNotification('✅ Template applied and saved!', 'success');
           }
         });
       });
@@ -193,16 +169,17 @@ const t = (key: string) => getTranslation(currentLocale, key);
 
     function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
-      notification.className = `fixed top-4 right-4 z-50 max-w-sm px-4 py-3 rounded-lg shadow-lg transition-all duration-300 ${
-        type === 'success' ? 'bg-green-600' : type === 'error' ? 'bg-red-600' : 'bg-blue-600'
-      } text-white`;
+      notification.className = `fixed top-20 right-4 z-50 max-w-sm px-4 py-3 rounded-lg shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-anakiwa-500' : type === 'error' ? 'bg-red-600' : 'bg-blue-600'
+      } text-[var(--primary-contrast)] font-medium`;
       notification.textContent = message;
 
       document.body.appendChild(notification);
 
       setTimeout(() => {
-        notification.remove();
-      }, 3000);
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+      }, 2500);
     }
 
     // Initialize on load

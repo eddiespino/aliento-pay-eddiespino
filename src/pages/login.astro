@@ -1,0 +1,387 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { enTranslations, esTranslations } from '../i18n';
+import { getAuthenticatedUser } from '../middleware';
+
+const logoUrl = 'https://files.peakd.com/file/peakd-hive/aliento/1000911907.jpg';
+
+// Get authenticated user from middleware
+const user = getAuthenticatedUser(Astro);
+
+// If user is authenticated, redirect to dashboard
+if (user) {
+  return Astro.redirect('/dashboard');
+}
+
+// Pass translations to the client
+const translations = {
+  en: enTranslations.login,
+  es: esTranslations.login
+};
+---
+
+<Layout
+  title="Sign in - Aliento Pay"
+  description="Sign in with your Hive Keychain to access Aliento Pay"
+>
+  <div class="min-h-screen bg-[var(--bg)] text-[var(--fg)]">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl bg-[var(--bg)]/80 border-b border-[var(--border)]">
+      <div class="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between">
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <img src={logoUrl} alt="Aliento logo" class="h-8 w-8 rounded-lg" />
+          <span class="font-semibold text-lg">Aliento Pay</span>
+        </a>
+
+        <!-- Language Switcher -->
+        <div class="flex gap-2">
+          <button
+            data-lang="en"
+            class="lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-anakiwa-500 text-[var(--primary-contrast)]"
+          >
+            EN
+          </button>
+          <button
+            data-lang="es"
+            class="lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-[var(--mutedFg)] hover:text-[var(--fg)]"
+          >
+            ES
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Login Content -->
+    <div class="relative overflow-hidden">
+      <!-- Background gradient -->
+      <div
+        class="absolute inset-0 opacity-30 pointer-events-none"
+        style="background: radial-gradient(60% 60% at 50% 10%, rgba(51,200,253,0.25) 0%, rgba(4,18,27,0) 60%)"
+      ></div>
+
+      <!-- Animated background particles -->
+      <div class="absolute inset-0 opacity-10 pointer-events-none">
+        <div class="absolute top-20 left-10 w-64 h-64 bg-anakiwa-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-slow"></div>
+        <div class="absolute top-40 right-10 w-72 h-72 bg-anakiwa-600 rounded-full mix-blend-multiply filter blur-3xl animate-pulse-slow" style="animation-delay: 1s;"></div>
+      </div>
+
+      <div class="relative flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
+        <div class="w-full max-w-md">
+          <!-- Login Card -->
+          <div class="relative rounded-2xl border border-[var(--border)] bg-[var(--bgElevated)] p-8 shadow-2xl">
+            <!-- Glow effect -->
+            <div class="absolute -inset-1 bg-gradient-to-r from-anakiwa-500/20 via-anakiwa-400/20 to-anakiwa-600/20 rounded-2xl blur-xl opacity-75 -z-10"></div>
+
+            <!-- Logo -->
+            <div class="flex justify-center mb-6">
+              <div class="relative">
+                <div class="absolute inset-0 bg-anakiwa-500 rounded-2xl blur-lg opacity-50"></div>
+                <img src={logoUrl} alt="Aliento" class="relative h-16 w-16 rounded-2xl" />
+              </div>
+            </div>
+
+            <!-- Title -->
+            <div class="text-center mb-8">
+              <h1 class="text-3xl font-bold bg-gradient-to-r from-[var(--fg)] via-anakiwa-200 to-anakiwa-300 bg-clip-text text-transparent mb-2">
+                Aliento Pay
+              </h1>
+              <p class="text-[var(--mutedFg)]" data-i18n="subtitle">
+                Connect with your Hive Keychain wallet
+              </p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="space-y-6">
+              <!-- Username Input -->
+              <div class="space-y-2">
+                <label for="username" class="block text-sm font-medium text-[var(--fg)]" data-i18n="hiveUsername">
+                  Hive Username
+                </label>
+                <div class="relative">
+                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="h-5 w-5 text-anakiwa-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    class="block w-full pl-10 pr-4 py-3 bg-[var(--bg)] border border-[var(--border)] rounded-xl text-[var(--fg)] placeholder-[var(--mutedFg)] focus:outline-none focus:ring-2 focus:ring-anakiwa-500 focus:border-transparent transition-all"
+                    data-i18n-placeholder="usernamePlaceholder"
+                    placeholder="yourusername"
+                  />
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button
+                type="submit"
+                id="login-button"
+                class="w-full py-3 px-4 bg-anakiwa-500 hover:bg-anakiwa-600 text-[var(--primary-contrast)] font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-anakiwa-400 focus:ring-offset-2 focus:ring-offset-[var(--bgElevated)] shadow-lg hover:shadow-anakiwa-500/50 flex items-center justify-center gap-2"
+              >
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M7 10V7c0-2.21 1.79-4 4-4s4 1.79 4 4v3h1c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2v-8c0-1.1.9-2 2-2h1zm2 0h6V7c0-1.66-1.34-3-3-3S9 5.34 9 7v3zm2 5.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5-.67 1.5-1.5 1.5-1.5-.67-1.5-1.5z"/>
+                </svg>
+                <span data-i18n="connectButton">Connect with Hive Keychain</span>
+              </button>
+
+              <!-- Loading State -->
+              <div id="loading-state" class="hidden space-y-3">
+                <div class="flex items-center justify-center gap-3 py-3">
+                  <svg class="animate-spin h-5 w-5 text-anakiwa-500" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span class="text-[var(--mutedFg)] text-sm" data-i18n="connecting">Connecting...</span>
+                </div>
+              </div>
+
+              <!-- Error Message -->
+              <div id="error-message" class="hidden rounded-xl bg-red-500/10 border border-red-500/20 p-4">
+                <div class="flex gap-3">
+                  <svg class="w-5 h-5 text-red-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                  </svg>
+                  <p class="text-sm text-red-300" id="error-text"></p>
+                </div>
+              </div>
+            </form>
+
+            <!-- Keychain Info -->
+            <div class="mt-8 pt-6 border-t border-[var(--border)]">
+              <div class="flex items-start gap-3 p-4 rounded-xl bg-anakiwa-500/10 border border-anakiwa-500/20">
+                <svg class="w-5 h-5 text-anakiwa-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                </svg>
+                <div class="flex-1">
+                  <p class="text-sm text-anakiwa-300 font-medium mb-1" data-i18n="noKeychain">
+                    Don't have Hive Keychain?
+                  </p>
+                  <a
+                    href="https://hive-keychain.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-sm text-anakiwa-400 hover:text-anakiwa-300 underline underline-offset-2 transition-colors"
+                    data-i18n="downloadExtension"
+                  >
+                    Download Extension
+                  </a>
+                </div>
+              </div>
+
+              <details class="mt-4">
+                <summary class="cursor-pointer text-sm text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors flex items-center gap-2 select-none">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span data-i18n="whatIsKeychain">What is Hive Keychain?</span>
+                </summary>
+                <p class="mt-2 text-sm text-[var(--mutedFg)] leading-relaxed pl-6" data-i18n="keychainDesc">
+                  Hive Keychain is a secure wallet for Hive blockchain that allows you to sign transactions securely from your browser.
+                </p>
+              </details>
+            </div>
+
+            <!-- Back to Home -->
+            <div class="mt-6 text-center">
+              <a href="/" class="text-sm text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors inline-flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to home
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</Layout>
+
+<script define:vars={{ translations }}>
+  // Language switching functionality
+  let currentLang = localStorage.getItem('lang') || 'en';
+
+  // Function to get translation
+  function getTranslation(key) {
+    const keys = key.split('.');
+    let value = translations[currentLang];
+
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return key;
+      }
+    }
+
+    return typeof value === 'string' ? value : key;
+  }
+
+  // Function to update all translations
+  function updateTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      el.textContent = getTranslation(key);
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.getAttribute('data-i18n-placeholder');
+      el.placeholder = getTranslation(key);
+    });
+
+    // Update language buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      const lang = btn.getAttribute('data-lang');
+      if (lang === currentLang) {
+        btn.className = 'lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-anakiwa-500 text-[var(--primary-contrast)]';
+      } else {
+        btn.className = 'lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-[var(--mutedFg)] hover:text-[var(--fg)]';
+      }
+    });
+  }
+
+  // Initialize translations
+  updateTranslations();
+
+  // Language button handlers
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      currentLang = btn.getAttribute('data-lang');
+      localStorage.setItem('lang', currentLang);
+      updateTranslations();
+    });
+  });
+
+  // Login functionality
+  const form = document.getElementById('login-form');
+  const loginButton = document.getElementById('login-button');
+  const loadingState = document.getElementById('loading-state');
+  const errorMessage = document.getElementById('error-message');
+  const errorText = document.getElementById('error-text');
+  const usernameInput = document.getElementById('username');
+
+  function showError(message) {
+    errorText.textContent = message;
+    errorMessage.classList.remove('hidden');
+  }
+
+  function hideError() {
+    errorMessage.classList.add('hidden');
+  }
+
+  function showLoading() {
+    loginButton.classList.add('hidden');
+    loadingState.classList.remove('hidden');
+  }
+
+  function hideLoading() {
+    loginButton.classList.remove('hidden');
+    loadingState.classList.add('hidden');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideError();
+
+    const username = usernameInput.value.trim();
+
+    if (!username) {
+      showError(getTranslation('errors.usernameRequired'));
+      return;
+    }
+
+    // Check if Hive Keychain is installed
+    if (!window.hive_keychain) {
+      showError(getTranslation('errors.keychainNotFound'));
+      return;
+    }
+
+    showLoading();
+
+    try {
+      // Request authentication from Hive Keychain
+      window.hive_keychain.requestSignBuffer(
+        username,
+        `Aliento.pay Login - ${new Date().toISOString()}`,
+        'Posting',
+        (response) => {
+          if (response.success) {
+            // Send to backend for validation
+            fetch('/api/auth/login', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                username: username,
+                signature: response.result,
+                timestamp: new Date().toISOString()
+              })
+            })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                // ✅ Save username to localStorage for client-side access
+                localStorage.setItem('authenticated_user', username);
+                console.log('✅ Usuario guardado en localStorage:', username);
+
+                // Redirect to dashboard
+                window.location.href = '/dashboard';
+              } else {
+                hideLoading();
+                showError(data.error || getTranslation('errors.connectionFailed'));
+              }
+            })
+            .catch(error => {
+              hideLoading();
+              showError(getTranslation('errors.connectionFailed'));
+              console.error('Login error:', error);
+            });
+          } else {
+            hideLoading();
+            if (response.error === 'user_cancel') {
+              showError(getTranslation('errors.keychainRejected'));
+            } else {
+              showError(response.message || getTranslation('errors.connectionFailed'));
+            }
+          }
+        }
+      );
+    } catch (error) {
+      hideLoading();
+      showError(getTranslation('errors.connectionFailed'));
+      console.error('Keychain error:', error);
+    }
+  });
+</script>
+
+<style>
+  @keyframes pulse-slow {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: .7;
+    }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  details summary::-webkit-details-marker {
+    display: none;
+  }
+
+  *:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+</style>

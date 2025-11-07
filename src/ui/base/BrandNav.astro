@@ -1,5 +1,5 @@
 ---
-// 🧭 Brand Navigation Component - Navegación transparente flotante
+// 🧭 Brand Navigation Component - Matching Landing/Login Page Style
 export interface Props {
   user?: string;
   showLogo?: boolean;
@@ -8,149 +8,195 @@ export interface Props {
 }
 
 import { getHiveAvatarUrl } from '../../domain/services/HiveAccountService';
-import LanguageSwitcher from '../components/LanguageSwitcher.astro';
 
+const logoUrl = 'https://files.peakd.com/file/peakd-hive/aliento/1000911907.jpg';
 const { user, showLogo = true, fixed = true, class: className = '', ...props } = Astro.props;
 
-const navClass = `${fixed ? 'nav-brand' : 'backdrop-blur-xl bg-brand-slate-900/20'} ${className}`;
+const navClass = fixed ? 'fixed' : 'relative';
 ---
 
-<nav class={navClass} {...props}>
-  <div class="nav-content">
+<header class={`${navClass} top-0 left-0 right-0 z-50 backdrop-blur-xl bg-[var(--bg)]/80 border-b border-[var(--border)] ${className}`} {...props}>
+  <div class="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
     <!-- Logo -->
-    {
-      showLogo && (
-        <div class="nav-logo">
-          <div class="w-8 h-8 bg-brand-gradient rounded-lg flex items-center justify-center" />
-          <span>Aliento.pay</span>
-        </div>
-      )
-    }
+    {showLogo && (
+      <a href="/dashboard" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <img src={logoUrl} alt="Aliento logo" class="h-8 w-8 rounded-lg" />
+        <span class="font-semibold text-lg text-[var(--fg)]">Aliento Pay</span>
+      </a>
+    )}
 
-    <!-- Navigation Links -->
-    <div class="nav-links">
-      <slot name="links">
-        <a href="/dashboard" class="nav-link">Dashboard</a>
-        <a href="/calculate" class="nav-link">Calculate</a>
-        <a href="/payments" class="nav-link">Payments</a>
-        <!-- 
-      Añadir el usrer
-        -->
-      </slot>
-    </div>
+    <!-- Desktop Navigation Links -->
+    <nav class="hidden md:flex items-center gap-6">
+      <a
+        href="/dashboard"
+        class="text-sm font-medium text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors"
+        data-nav-link
+      >
+        Dashboard
+      </a>
+      <a
+        href="/calculate"
+        class="text-sm font-medium text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors"
+        data-nav-link
+      >
+        Calculate
+      </a>
+      <a
+        href="/payments"
+        class="text-sm font-medium text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors"
+        data-nav-link
+      >
+        Payments
+      </a>
+    </nav>
 
-    <!-- User Section -->
-    {
-      user && (
-        <div class="nav-user">
-          <!-- Language Switcher -->
-          <div class="mr-3">
-            <LanguageSwitcher />
-          </div>
+    <!-- Right Section -->
+    <div class="flex items-center gap-4">
+      <!-- Language Switcher -->
+      <div class="flex gap-2">
+        <button
+          data-lang="en"
+          class="lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-anakiwa-500 text-[var(--primary-contrast)]"
+        >
+          EN
+        </button>
+        <button
+          data-lang="es"
+          class="lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-[var(--mutedFg)] hover:text-[var(--fg)]"
+        >
+          ES
+        </button>
+      </div>
 
-          <div class="flex items-center gap-2 mr-4">
+      <!-- User Section -->
+      {user && (
+        <div class="hidden md:flex items-center gap-3">
+          <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[var(--bgElevated)] border border-[var(--border)]">
             <img
               id="user-avatar-img"
               src={getHiveAvatarUrl(user)}
-              alt="User Avatar"
-              class="w-8 h-8 rounded-full"
+              alt={`@${user}`}
+              class="w-6 h-6 rounded-full"
             />
-            <span id="user-greeting" class="hidden md:inline text-brand-slate-300 text-sm">
+            <span id="user-greeting" class="text-sm text-[var(--fg)]">
               @{user}
             </span>
           </div>
 
           <button
             id="logout-btn"
-            class="block w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors duration-200"
+            class="px-3 py-1.5 rounded-lg text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 transition-colors"
           >
             Logout
           </button>
         </div>
-      )
-    }
+      )}
 
-    <!-- Language Switcher for non-authenticated users -->
-    {
-      !user && (
-        <div class="ml-auto">
-          <LanguageSwitcher />
-        </div>
-      )
-    }
-
-    <!-- Mobile Menu Button -->
-    <button
-      id="mobile-menu-btn"
-      class="md:hidden text-brand-slate-400 hover:text-white transition-colors duration-200 p-2"
-      aria-label="Menu"
-    >
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M4 6h16M4 12h16M4 18h16"></path>
-      </svg>
-    </button>
+      <!-- Mobile Menu Button -->
+      <button
+        id="mobile-menu-btn"
+        class="md:hidden p-2 text-[var(--mutedFg)] hover:text-[var(--fg)] transition-colors"
+        aria-label="Menu"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- Mobile Menu -->
-  <div id="mobile-menu" class="md:hidden border-t border-brand-slate-700/30 hidden">
+  <div id="mobile-menu" class="hidden md:hidden border-t border-[var(--border)] bg-[var(--bgElevated)]">
     <div class="px-4 py-4 space-y-2">
       <a
         href="/dashboard"
-        class="block py-2 text-brand-slate-300 hover:text-white transition-colors duration-200"
+        class="block py-2 text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors"
       >
         Dashboard
       </a>
       <a
         href="/calculate"
-        class="block py-2 text-brand-slate-300 hover:text-white transition-colors duration-200"
+        class="block py-2 text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors"
       >
         Calculate
       </a>
       <a
         href="/payments"
-        class="block py-2 text-brand-slate-300 hover:text-white transition-colors duration-200"
+        class="block py-2 text-[var(--mutedFg)] hover:text-anakiwa-400 transition-colors"
       >
         Payments
       </a>
+
+      {user && (
+        <div class="pt-4 border-t border-[var(--border)] space-y-2">
+          <div class="flex items-center gap-2 py-2">
+            <img
+              src={getHiveAvatarUrl(user)}
+              alt={`@${user}`}
+              class="w-8 h-8 rounded-full"
+            />
+            <span class="text-sm text-[var(--fg)]">@{user}</span>
+          </div>
+          <button
+            id="logout-btn-mobile"
+            class="block w-full text-left py-2 text-red-400 hover:text-red-300 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      )}
     </div>
   </div>
-</nav>
+</header>
 
 <script>
-  // Navigation interactivity
-  document.addEventListener('DOMContentLoaded', () => {
-    const menuBtn = document.getElementById('nav-menu-btn');
-    const dropdown = document.getElementById('nav-dropdown');
-    const mobileBtn = document.getElementById('mobile-menu-btn');
-    const mobileMenu = document.getElementById('mobile-menu');
-    const logoutBtn = document.getElementById('logout-btn');
+  // Language switching functionality
+  let currentLang = localStorage.getItem('lang') || 'en';
 
-    // Desktop dropdown
-    if (menuBtn && dropdown) {
-      menuBtn.addEventListener('click', () => {
-        dropdown.classList.toggle('hidden');
-      });
+  function updateLanguageButtons() {
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      const lang = btn.getAttribute('data-lang');
+      if (lang === currentLang) {
+        btn.className = 'lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-anakiwa-500 text-[var(--primary-contrast)]';
+      } else {
+        btn.className = 'lang-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors text-[var(--mutedFg)] hover:text-[var(--fg)]';
+      }
+    });
+  }
 
-      // Close dropdown when clicking outside
-      document.addEventListener('click', e => {
-        if (!menuBtn.contains(e.target) && !dropdown.contains(e.target)) {
-          dropdown.classList.add('hidden');
-        }
-      });
-    }
+  // Initialize language buttons
+  updateLanguageButtons();
 
-    // Mobile menu
-    if (mobileBtn && mobileMenu) {
-      mobileBtn.addEventListener('click', () => {
-        mobileMenu.classList.toggle('hidden');
-      });
-    }
+  // Language button handlers
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const newLang = btn.getAttribute('data-lang');
 
-    // Logout functionality
+      if (newLang !== currentLang) {
+        currentLang = newLang;
+        localStorage.setItem('lang', currentLang);
+        updateLanguageButtons();
+
+        // Reload to apply translations (page-level translation system)
+        window.location.reload();
+      }
+    });
+  });
+
+  // Mobile menu toggle
+  const mobileBtn = document.getElementById('mobile-menu-btn');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  if (mobileBtn && mobileMenu) {
+    mobileBtn.addEventListener('click', () => {
+      mobileMenu.classList.toggle('hidden');
+    });
+  }
+
+  // Logout functionality
+  function setupLogout(buttonId) {
+    const logoutBtn = document.getElementById(buttonId);
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
         try {
@@ -174,5 +220,30 @@ const navClass = `${fixed ? 'nav-brand' : 'backdrop-blur-xl bg-brand-slate-900/2
         }
       });
     }
+  }
+
+  setupLogout('logout-btn');
+  setupLogout('logout-btn-mobile');
+
+  // Highlight active nav link
+  function updateActiveNavLink() {
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('[data-nav-link]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (currentPath === href || currentPath.startsWith(href + '/')) {
+        link.classList.add('text-anakiwa-400');
+        link.classList.remove('text-[var(--mutedFg)]');
+      }
+    });
+  }
+
+  updateActiveNavLink();
+
+  // Re-initialize on Astro page transitions
+  document.addEventListener('astro:page-load', () => {
+    updateLanguageButtons();
+    updateActiveNavLink();
+    setupLogout('logout-btn');
+    setupLogout('logout-btn-mobile');
   });
 </script>
