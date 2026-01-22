@@ -38,17 +38,12 @@ interface HafahOperationsResponse {
 
 interface HafahOperation {
 	timestamp: string;
-	block_num: number;
-	trx_id: string;
+	block: number;
+	trx_id: string | null;
+	operation_id: string;
 	op: {
 		type: string;
-		value: {
-			reward?: { amount: string; precision: number; nai: string };
-			curator?: string;
-			comment_author?: string;
-			comment_permlink?: string;
-			payout_must_be_claimed?: boolean;
-		};
+		value: Record<string, unknown>;
 	};
 }
 
@@ -209,18 +204,18 @@ export function parseAsset(asset: string | { amount: string; precision: number }
 	};
 }
 
-export function vestsToHpBigInt(
+export function vestsToHp(
 	vests: ParsedAsset,
 	totalVestingFundHive: ParsedAsset,
 	totalVestingShares: ParsedAsset
 ): number {
-	const numerator = vests.amount * totalVestingFundHive.amount * BigInt(Math.pow(10, totalVestingShares.precision));
-	const denominator = totalVestingShares.amount * BigInt(Math.pow(10, vests.precision)) * BigInt(Math.pow(10, totalVestingFundHive.precision));
+	const vestsAmount = Number(vests.amount) / Math.pow(10, vests.precision);
+	const hiveAmount = Number(totalVestingFundHive.amount) / Math.pow(10, totalVestingFundHive.precision);
+	const sharesAmount = Number(totalVestingShares.amount) / Math.pow(10, totalVestingShares.precision);
 
-	if (denominator === BigInt(0)) return 0;
+	if (sharesAmount === 0) return 0;
 
-	const result = numerator / denominator;
-	return Number(result);
+	return vestsAmount * hiveAmount / sharesAmount;
 }
 
 export type { HafahOperation, HafahOperationsResponse, GlobalDynamicProperties };

@@ -2,8 +2,7 @@ import {
 	getGlobalDynamicProperties,
 	hafahApiCall,
 	parseAsset,
-	vestsToHpBigInt,
-	type HafahOperation,
+	vestsToHp,
 	type GlobalDynamicProperties,
 } from './hive-http-client';
 
@@ -42,6 +41,23 @@ interface CurationReward {
 	mustBeClaimed: boolean;
 }
 
+interface HafahCurationOperation {
+	timestamp: string;
+	block: number;
+	trx_id: string | null;
+	operation_id: string;
+	op: {
+		type: string;
+		value: {
+			reward?: { amount: string; precision: number; nai: string };
+			curator?: string;
+			author?: string;
+			permlink?: string;
+			payout_must_be_claimed?: boolean;
+		};
+	};
+}
+
 let globalPropsCache: GlobalPropsCache | null = null;
 const curationStatsCache = new Map<string, CurationStatsCache>();
 
@@ -59,7 +75,7 @@ async function getGlobalPropsWithCache(): Promise<GlobalDynamicProperties> {
 }
 
 function parseOperationToCurationReward(
-	operation: HafahOperation,
+	operation: HafahCurationOperation,
 	globalProps: GlobalDynamicProperties
 ): CurationReward | null {
 	if (operation.op.type !== 'curation_reward_operation') {
@@ -77,18 +93,18 @@ function parseOperationToCurationReward(
 	const totalVestingFundHive = parseAsset(globalProps.total_vesting_fund_hive);
 	const totalVestingShares = parseAsset(globalProps.total_vesting_shares);
 
-	const hpReward = vestsToHpBigInt(vestsParsed, totalVestingFundHive, totalVestingShares);
+	const hpReward = vestsToHp(vestsParsed, totalVestingFundHive, totalVestingShares);
 
 	return {
-		operationId: `${operation.block_num}-${operation.trx_id}`,
+		operationId: operation.operation_id,
 		timestamp: operation.timestamp,
-		blockNum: operation.block_num,
-		trxId: operation.trx_id,
+		blockNum: operation.block,
+		trxId: operation.trx_id ?? '',
 		reward: hpReward,
 		rewardVests: Number(vestsParsed.amount) / Math.pow(10, vestsParsed.precision),
 		curator: opValue.curator ?? '',
-		author: opValue.comment_author ?? '',
-		permlink: opValue.comment_permlink ?? '',
+		author: opValue.author ?? '',
+		permlink: opValue.permlink ?? '',
 		mustBeClaimed: opValue.payout_must_be_claimed ?? false,
 	};
 }
@@ -124,15 +140,13 @@ export async function curationStatsServer(account: string): Promise<CurationStat
 	const rewards7D: CurationReward[] = [];
 	const rewards30D: CurationReward[] = [];
 
-	let totalPages = 0;
-	let currentPageIndex = 1;
-	let hasMorePages = true;
+	let currentPage = 1;
+	let totalPages = 1;
 
-	while (hasMorePages) {
-		const actualPage = currentPageIndex === 1 ? null : totalPages - currentPageIndex + 2;
-
+	while (currentPage <= totalPages) {
 		const response = await hafahApiCall(accountLower, CURATION_REWARD_OPERATION_TYPE, {
-			page: actualPage,
+			page: currentPage,
+			pageSize: 100,
 			fromBlock: fromBlockDate,
 			toBlock: toBlockDate,
 		});
@@ -141,15 +155,18 @@ export async function curationStatsServer(account: string): Promise<CurationStat
 			break;
 		}
 
-		if (currentPageIndex === 1) {
+		if (currentPage === 1) {
 			totalPages = response.total_pages;
 		}
 
-		for (const operation of response.operations_result) {
+		for (const rawOp of response.operations_result) {
+			const operation = rawOp as unknown as HafahCurationOperation;
 			const reward = parseOperationToCurationReward(operation, globalProps);
 			if (!reward) continue;
 
-			const rewardDate = new Date(reward.timestamp);
+			// API returns timestamps without timezone - treat as UTC
+			const timestampUtc = reward.timestamp.endsWith('Z') ? reward.timestamp : reward.timestamp + 'Z';
+			const rewardDate = new Date(timestampUtc);
 
 			if (rewardDate >= date24HoursAgo && !processed24Hr.has(reward.operationId)) {
 				processed24Hr.add(reward.operationId);
@@ -167,11 +184,10 @@ export async function curationStatsServer(account: string): Promise<CurationStat
 			}
 		}
 
-		currentPageIndex++;
-		hasMorePages = currentPageIndex <= totalPages && totalPages > 1;
+		currentPage++;
 
-		if (hasMorePages) {
-			await new Promise(resolve => setTimeout(resolve, 100));
+		if (currentPage <= totalPages) {
+			await new Promise(resolve => setTimeout(resolve, 50));
 		}
 	}
 
