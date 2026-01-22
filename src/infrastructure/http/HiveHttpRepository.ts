@@ -1,401 +1,421 @@
-import { createHiveChain } from '@hiveio/wax';
+import { getHiveChain } from '../../lib/hive-chain-instance';
+import type { HiveChainWithFailover } from '../../lib/hive-chain-failover';
 import type { Delegation, HiveAccount } from '../../domain/entities/HiveAccount';
 import type { HiveRepository, VestsConverter } from '../../domain/ports/HiveRepository';
 
-/**
- * Adaptador HTTP: Implementación concreta de HiveRepository
- * Usa APIs reales de Hive
- */
-// Cache para propiedades globales de Hive
 interface GlobalPropsCache {
-  totalVestingFundHive: string;
-  totalVestingShares: string;
-  cachedAt: number;
-  vestsToHpRatio: number;
+	totalVestingFundHive: string;
+	totalVestingShares: string;
+	cachedAt: number;
+	vestsToHpRatio: number;
 }
 
+interface OperationsMetadata {
+	total_operations: number;
+	total_pages: number;
+}
+
+interface DelegationsPageResult {
+	operations: RawDelegationOperation[];
+	totalPages: number;
+}
+
+interface RawDelegationOperation {
+	timestamp: string;
+	block_num: number;
+	trx_id: string;
+	op: {
+		value: {
+			delegator: string;
+			delegatee: string;
+			vesting_shares: VestsAsset;
+		};
+	};
+}
+
+type VestsAsset = string | number | { amount: string; precision?: number };
+
+interface HafahApiExtension {
+	'hafah-api': {
+		accounts: {
+			operations: {
+				urlPath: string;
+			};
+		};
+	};
+}
+
+interface HafahOperationsResponse {
+	total_operations: number;
+	total_pages: number;
+	operations_result?: RawDelegationOperation[];
+}
+
+interface HafahOperationsQuery {
+	accountName: string;
+	'operation-types': string;
+	page?: number;
+	'page-size': number;
+	'data-size-limit': number;
+}
+
+interface HafahRestApi {
+	'hafah-api': {
+		accounts: {
+			operations: (query: HafahOperationsQuery) => Promise<HafahOperationsResponse>;
+		};
+	};
+}
+
+interface GlobalDynamicProperties {
+	total_vesting_fund_hive: unknown;
+	total_vesting_shares: unknown;
+}
+
+interface DatabaseApi {
+	get_dynamic_global_properties: () => Promise<GlobalDynamicProperties>;
+}
+
+const FALLBACK_VESTS_TO_HP_RATIO = 0.0005993102;
+const CACHE_DURATION_MS = 5 * 60 * 1000;
+const ACCOUNTS_API_URL = 'https://hafsql-api.mahdiyari.info/accounts/by-names';
+const PAGINATION_DELAY_MS = 150;
+const DELEGATION_OPERATION_TYPE = '40';
+const PAGE_SIZE = 400;
+const DATA_SIZE_LIMIT = 200000;
+
 export class HiveHttpRepository implements HiveRepository, VestsConverter {
-  private globalPropsCache: GlobalPropsCache | null = null;
-  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutos en ms
-  private readonly accountsApiUrl = 'https://hafsql-api.mahdiyari.info/accounts/by-names';
+	private globalPropsCache: GlobalPropsCache | null = null;
 
-  /**
-   * Obtiene información de una cuenta por username
-   */
-  async getAccount(username: string): Promise<HiveAccount | null> {
-    try {
-      const response = await fetch(`${this.accountsApiUrl}?names=${username}`);
+	async getAccount(username: string): Promise<HiveAccount | null> {
+		try {
+			const response = await fetch(`${ACCOUNTS_API_URL}?names=${username}`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
 
-      const accounts: HiveAccount[] = await response.json();
+			const accounts: HiveAccount[] = await response.json();
 
-      if (accounts.length === 0) {
-        return null;
-      }
+			if (accounts.length === 0) {
+				return null;
+			}
 
-      return accounts[0] ?? null;
-    } catch (error) {
-      console.error('Error fetching Hive account:', error);
-      return null;
-    }
-  }
+			return accounts[0] ?? null;
+		} catch (error) {
+			console.error('Error fetching Hive account:', error);
+			return null;
+		}
+	}
 
-  /**
-   * Obtiene información de múltiples cuentas
-   */
-  async getAccounts(usernames: string[]): Promise<HiveAccount[]> {
-    try {
-      const namesParam = usernames.join(',');
-      const response = await fetch(`${this.accountsApiUrl}?names=${namesParam}`);
+	async getAccounts(usernames: string[]): Promise<HiveAccount[]> {
+		try {
+			const namesParam = usernames.join(',');
+			const response = await fetch(`${ACCOUNTS_API_URL}?names=${namesParam}`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+			if (!response.ok) {
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
 
-      const accounts: HiveAccount[] = await response.json();
-      return accounts;
-    } catch (error) {
-      console.error('Error fetching Hive accounts:', error);
-      return [];
-    }
-  }
+			const accounts: HiveAccount[] = await response.json();
+			return accounts;
+		} catch (error) {
+			console.error('Error fetching Hive accounts:', error);
+			return [];
+		}
+	}
 
-  /**
-   * Obtiene delegaciones activas hacia una cuenta
-   */
-  async getActiveDelegations(username: string): Promise<Delegation[]> {
-    try {
-      const chain = await createHiveChain();
+	async getActiveDelegations(username: string): Promise<Delegation[]> {
+		try {
+			const chainWithFailover = await getHiveChain();
+			const chainExtendedRestApi = this.createHafahApiExtension();
 
-      // Crear la estructura de API extendida (igual que antes)
-      const chainExtendedRestApi = {
-        'hafah-api': {
-          accounts: {
-            operations: {
-              urlPath: '{accountName}/operations',
-            },
-          },
-        },
-      };
+			const metadata = await this.getOperationsMetadataWithFailover(
+				chainWithFailover,
+				chainExtendedRestApi,
+				username
+			);
 
-      const extended = chain.extendRest(chainExtendedRestApi);
+			if (metadata.total_operations === 0) {
+				return [];
+			}
 
-      // Obtener metadatos primero
-      const metadata = await this.getOperationsMetadata(extended, username);
+			const allOperations = await this.fetchAllDelegationPages(
+				chainWithFailover,
+				chainExtendedRestApi,
+				username
+			);
 
-      if (metadata.total_operations === 0) {
-        return [];
-      }
+			return this.processRawDelegations(allOperations, username);
+		} catch (error) {
+			console.error('Error fetching delegations:', error);
+			return [];
+		}
+	}
 
-      let allDelegations: any[] = [];
+	async vestsToHP(vests: string): Promise<number> {
+		try {
+			const globalProps = await this.getGlobalPropsWithCache();
+			const vestsAmount = this.parseVestsToNumber(vests);
+			return vestsAmount * globalProps.vestsToHpRatio;
+		} catch (error) {
+			console.error('Error converting VESTS to HP:', error);
+			const vestsAmount = this.parseVestsToNumber(vests);
+			return vestsAmount * FALLBACK_VESTS_TO_HP_RATIO;
+		}
+	}
 
-      // Estrategia optimizada según número de operaciones
-      if (metadata.total_operations <= 500) {
-        const firstBatch = await this.getDelegationsPage(extended, username);
-        allDelegations.push(...firstBatch);
+	async batchVestsToHP(vestsList: VestsAsset[]): Promise<number[]> {
+		if (vestsList.length === 0) return [];
 
-        const realTotalPages = await this.getRealTotalPages(extended, username);
+		try {
+			const globalProps = await this.getGlobalPropsWithCache();
+			return vestsList.map(vests => this.parseVestsToNumber(vests) * globalProps.vestsToHpRatio);
+		} catch (error) {
+			console.error('Error in batch VESTS to HP conversion:', error);
+			return vestsList.map(vests => this.parseVestsToNumber(vests) * FALLBACK_VESTS_TO_HP_RATIO);
+		}
+	}
 
-        if (realTotalPages > 1) {
-          for (let index = 1; index < realTotalPages; index++) {
-            const currentPage = realTotalPages - index;
-            if (currentPage < 1) break;
+	private createHafahApiExtension(): HafahApiExtension {
+		return {
+			'hafah-api': {
+				accounts: {
+					operations: {
+						urlPath: '{accountName}/operations',
+					},
+				},
+			},
+		};
+	}
 
-            try {
-              const pageDelegations = await this.getDelegationsPage(
-                extended,
-                username,
-                currentPage
-              );
-              allDelegations.push(...pageDelegations);
-            } catch (error) {
-              console.error(`Error en página ${currentPage}:`, error);
-            }
+	private async fetchAllDelegationPages(
+		chainWithFailover: HiveChainWithFailover,
+		chainExtendedRestApi: HafahApiExtension,
+		username: string
+	): Promise<RawDelegationOperation[]> {
+		const allOperations: RawDelegationOperation[] = [];
 
-            // Delay entre peticiones
-            await new Promise(resolve => setTimeout(resolve, 150));
-          }
-        }
-      } else {
-        // Estrategia para muchas operaciones
-        const firstBatch = await this.getDelegationsPage(extended, username);
-        allDelegations.push(...firstBatch);
+		const firstBatch = await this.getDelegationsPageWithFailover(
+			chainWithFailover,
+			chainExtendedRestApi,
+			username
+		);
+		allOperations.push(...firstBatch.operations);
 
-        const realTotalPages = await this.getRealTotalPages(extended, username);
+		const totalPages = firstBatch.totalPages;
 
-        if (realTotalPages > 1) {
-          for (let index = 1; index < realTotalPages; index++) {
-            const currentPage = realTotalPages - index;
-            if (currentPage < 1) break;
+		for (let pageIndex = 1; pageIndex < totalPages; pageIndex++) {
+			const currentPage = totalPages - pageIndex;
+			if (currentPage < 1) break;
 
-            try {
-              const pageDelegations = await this.getDelegationsPage(
-                extended,
-                username,
-                currentPage
-              );
-              allDelegations.push(...pageDelegations);
-            } catch (error) {
-              console.error(`Error en página ${currentPage}:`, error);
-            }
+			try {
+				const pageResult = await this.getDelegationsPageWithFailover(
+					chainWithFailover,
+					chainExtendedRestApi,
+					username,
+					currentPage
+				);
+				allOperations.push(...pageResult.operations);
+			} catch {
+				continue;
+			}
 
-            await new Promise(resolve => setTimeout(resolve, 150));
-          }
-        }
-      }
+			await this.delay(PAGINATION_DELAY_MS);
+		}
 
-      // Procesar delegaciones y convertir a entidades del dominio
-      return this.processRawDelegations(allDelegations, username);
-    } catch (error) {
-      console.error('Error fetching delegations:', error);
-      return [];
-    }
-  }
+		return allOperations;
+	}
 
-  /**
-   * Parsea un asset de Hive (string o {amount, precision}) a número decimal
-   */
-  private parseAsset(asset: any): number {
-    if (typeof asset === 'string') {
-      // Ejemplo: "12345.678 HIVE"
-      return parseFloat(asset.replace(/[^\d.]/g, ''));
-    }
-    if (asset && typeof asset === 'object' && 'amount' in asset && 'precision' in asset) {
-      // Ejemplo: { amount: "187213744879", precision: 3 }
-      return parseInt(asset.amount, 10) / Math.pow(10, asset.precision);
-    }
-    return 0;
-  }
+	private async getOperationsMetadataWithFailover(
+		chainWithFailover: HiveChainWithFailover,
+		chainExtendedRestApi: HafahApiExtension,
+		username: string
+	): Promise<OperationsMetadata> {
+		const query = {
+			accountName: username,
+			'operation-types': DELEGATION_OPERATION_TYPE,
+			'page-size': PAGE_SIZE,
+			'data-size-limit': DATA_SIZE_LIMIT,
+		};
 
-  /**
-   * Obtiene las propiedades globales con cache
-   */
-  private async getGlobalPropsWithCache(): Promise<GlobalPropsCache> {
-    const now = Date.now();
+		const result = await chainWithFailover.executeRestWithFailover(
+			async chain => {
+				const extended = chain.extendRest(chainExtendedRestApi);
+				const api = extended.restApi as unknown as HafahRestApi;
+				return api['hafah-api'].accounts.operations(query);
+			},
+			`getOperationsMetadata(${username})`
+		);
 
-    // Verificar si el cache es válido
-    if (this.globalPropsCache && now - this.globalPropsCache.cachedAt < this.CACHE_DURATION) {
-      return this.globalPropsCache;
-    }
+		return {
+			total_operations: result.total_operations,
+			total_pages: result.total_pages,
+		};
+	}
 
-    try {
-      const chain = await createHiveChain();
-      const globalProps = await (chain.api.database_api as any).get_dynamic_global_properties();
+	private async getDelegationsPageWithFailover(
+		chainWithFailover: HiveChainWithFailover,
+		chainExtendedRestApi: HafahApiExtension,
+		username: string,
+		page?: number
+	): Promise<DelegationsPageResult> {
+		const query = {
+			accountName: username,
+			'operation-types': DELEGATION_OPERATION_TYPE,
+			page,
+			'page-size': PAGE_SIZE,
+			'data-size-limit': DATA_SIZE_LIMIT,
+		};
 
-      // Calcular el ratio una vez
-      const totalVestingFundHive = this.parseAsset(globalProps.total_vesting_fund_hive);
-      const totalVestingShares = this.parseAsset(globalProps.total_vesting_shares);
-      const vestsToHpRatio = totalVestingFundHive / totalVestingShares;
+		const result = await chainWithFailover.executeRestWithFailover(
+			async chain => {
+				const extended = chain.extendRest(chainExtendedRestApi);
+				const api = extended.restApi as unknown as HafahRestApi;
+				return api['hafah-api'].accounts.operations(query);
+			},
+			`getDelegationsPage(${username}, page ${page ?? 1})`
+		);
 
-      this.globalPropsCache = {
-        totalVestingFundHive: globalProps.total_vesting_fund_hive,
-        totalVestingShares: globalProps.total_vesting_shares,
-        vestsToHpRatio,
-        cachedAt: now,
-      };
+		return {
+			operations: result.operations_result ?? [],
+			totalPages: result.total_pages ?? 1,
+		};
+	}
 
-      console.log(
-        `🔄 Propiedades globales actualizadas. Ratio VESTS→HP: ${vestsToHpRatio.toFixed(8)}`
-      );
-      return this.globalPropsCache;
-    } catch (error) {
-      console.error('Error obteniendo propiedades globales:', error);
+	private parseAsset(asset: unknown): number {
+		if (typeof asset === 'string') {
+			return parseFloat(asset.replace(/[^\d.]/g, ''));
+		}
+		if (this.isAssetObject(asset)) {
+			return parseInt(asset.amount, 10) / Math.pow(10, asset.precision);
+		}
+		return 0;
+	}
 
-      // Si tenemos cache expirado, usarlo como fallback
-      if (this.globalPropsCache) {
-        console.warn('⚠️ Usando cache expirado como fallback');
-        return this.globalPropsCache;
-      }
+	private isAssetObject(asset: unknown): asset is { amount: string; precision: number } {
+		return (
+			typeof asset === 'object' &&
+			asset !== null &&
+			'amount' in asset &&
+			'precision' in asset &&
+			typeof (asset as { amount: unknown }).amount === 'string' &&
+			typeof (asset as { precision: unknown }).precision === 'number'
+		);
+	}
 
-      // Fallback con valores aproximados
-      const fallbackRatio = 0.0005993102;
-      this.globalPropsCache = {
-        totalVestingFundHive: '0 HIVE',
-        totalVestingShares: '0 VESTS',
-        vestsToHpRatio: fallbackRatio,
-        cachedAt: now,
-      };
+	private parseVestsToNumber(vests: VestsAsset): number {
+		if (typeof vests === 'string') {
+			return parseFloat(vests.replace(' VESTS', '')) || 0;
+		}
+		if (typeof vests === 'number') {
+			return vests;
+		}
+		if (typeof vests === 'object' && vests !== null && 'amount' in vests) {
+			return parseFloat(String(vests.amount).replace(' VESTS', '')) || 0;
+		}
+		return 0;
+	}
 
-      console.warn(`⚠️ Usando ratio fallback: ${fallbackRatio}`);
-      return this.globalPropsCache;
-    }
-  }
+	private async getGlobalPropsWithCache(): Promise<GlobalPropsCache> {
+		const now = Date.now();
 
-  /**
-   * Convierte VESTS a HP usando cache optimizado
-   */
-  async vestsToHP(vests: string): Promise<number> {
-    try {
-      const globalProps = await this.getGlobalPropsWithCache();
-      const vestsAmount = parseFloat(vests.replace(' VESTS', '')) || 0;
-      return vestsAmount * globalProps.vestsToHpRatio;
-    } catch (error) {
-      console.error('Error converting VESTS to HP:', error);
-      // Fallback con ratio aproximado
-      const vestsAmount = parseFloat(vests.replace(' VESTS', '')) || 0;
-      return vestsAmount * 0.0005993102;
-    }
-  }
+		if (this.globalPropsCache && now - this.globalPropsCache.cachedAt < CACHE_DURATION_MS) {
+			return this.globalPropsCache;
+		}
 
-  /**
-   * Convierte múltiples VESTS a HP en lote usando el mismo cache
-   */
-  async batchVestsToHP(vestsList: (string | number | any)[]): Promise<number[]> {
-    if (vestsList.length === 0) return [];
+		try {
+			const chainWithFailover = await getHiveChain();
+			const globalProps = await chainWithFailover.executeWithFailover(
+				async chain => {
+					const dbApi = chain.api.database_api as unknown as DatabaseApi;
+					return dbApi.get_dynamic_global_properties();
+				},
+				'get_dynamic_global_properties'
+			);
 
-    try {
-      // Obtener propiedades globales UNA SOLA VEZ
-      const globalProps = await this.getGlobalPropsWithCache();
+			const totalVestingFundHive = this.parseAsset(globalProps.total_vesting_fund_hive);
+			const totalVestingShares = this.parseAsset(globalProps.total_vesting_shares);
+			const vestsToHpRatio = totalVestingFundHive / totalVestingShares;
 
-      // Convertir todas las delegaciones usando el mismo ratio
-      return vestsList.map(vests => {
-        // ✅ MANEJO ROBUSTO DE DIFERENTES TIPOS DE VESTS
-        let vestsAmount = 0;
+			this.globalPropsCache = {
+				totalVestingFundHive: String(globalProps.total_vesting_fund_hive),
+				totalVestingShares: String(globalProps.total_vesting_shares),
+				vestsToHpRatio,
+				cachedAt: now,
+			};
 
-        if (typeof vests === 'string') {
-          // Si es string, remover ' VESTS' y convertir
-          vestsAmount = parseFloat(vests.replace(' VESTS', '')) || 0;
-        } else if (typeof vests === 'number') {
-          // Si ya es número, usarlo directamente
-          vestsAmount = vests;
-        } else if (vests && typeof vests === 'object' && vests.amount) {
-          // Si es objeto con propiedad amount
-          vestsAmount = parseFloat(vests.amount.toString().replace(' VESTS', '')) || 0;
-        } else {
-          // Fallback: intentar convertir a string y luego a número
-          const vestsString = String(vests || '0');
-          vestsAmount = parseFloat(vestsString.replace(' VESTS', '')) || 0;
-        }
+			return this.globalPropsCache;
+		} catch (error) {
+			console.error('Error fetching global properties:', error);
 
-        return vestsAmount * globalProps.vestsToHpRatio;
-      });
-    } catch (error) {
-      console.error('Error en conversión por lotes VESTS to HP:', error);
-      // Fallback
-      const fallbackRatio = 0.0005993102;
-      return vestsList.map(vests => {
-        // ✅ Mismo manejo robusto en fallback
-        let vestsAmount = 0;
+			if (this.globalPropsCache) {
+				return this.globalPropsCache;
+			}
 
-        if (typeof vests === 'string') {
-          vestsAmount = parseFloat(vests.replace(' VESTS', '')) || 0;
-        } else if (typeof vests === 'number') {
-          vestsAmount = vests;
-        } else if (vests && typeof vests === 'object' && vests.amount) {
-          vestsAmount = parseFloat(vests.amount.toString().replace(' VESTS', '')) || 0;
-        } else {
-          const vestsString = String(vests || '0');
-          vestsAmount = parseFloat(vestsString.replace(' VESTS', '')) || 0;
-        }
+			this.globalPropsCache = {
+				totalVestingFundHive: '0 HIVE',
+				totalVestingShares: '0 VESTS',
+				vestsToHpRatio: FALLBACK_VESTS_TO_HP_RATIO,
+				cachedAt: now,
+			};
 
-        return vestsAmount * fallbackRatio;
-      });
-    }
-  }
+			return this.globalPropsCache;
+		}
+	}
 
-  // Métodos privados auxiliares...
-  private async getOperationsMetadata(extended: any, username: string) {
-    const query = {
-      accountName: username,
-      'operation-types': '40',
-      'page-size': 400,
-      'data-size-limit': 200000,
-    };
+	private async processRawDelegations(
+		rawOperations: RawDelegationOperation[],
+		targetDelegatee: string
+	): Promise<Delegation[]> {
+		const latestByDelegator = this.getLatestOperationByDelegator(rawOperations);
 
-    const result = await (extended.restApi as any)['hafah-api'].accounts.operations(query);
-    return {
-      total_operations: result.total_operations,
-      total_pages: result.total_pages,
-    };
-  }
+		const relevantOperations = Array.from(latestByDelegator.values()).filter(
+			operation => operation.op.value.delegatee === targetDelegatee
+		);
 
-  private async getRealTotalPages(extended: any, username: string): Promise<number> {
-    const query = {
-      accountName: username,
-      'operation-types': '40',
-      'page-size': 400,
-      'data-size-limit': 200000,
-    };
+		if (relevantOperations.length === 0) {
+			return [];
+		}
 
-    const result = await (extended.restApi as any)['hafah-api'].accounts.operations(query);
-    return result.total_pages;
-  }
+		const vestsList = relevantOperations.map(op => op.op.value.vesting_shares);
+		const hpAmounts = await this.batchVestsToHP(vestsList);
 
-  private async getDelegationsPage(extended: any, username: string, page?: number) {
-    const query: any = {
-      accountName: username,
-      'operation-types': '40',
-      page,
-      'page-size': 400,
-      'data-size-limit': 200000,
-    };
+		const delegations: Delegation[] = relevantOperations.map((operation, index) => ({
+			delegator: operation.op.value.delegator,
+			delegatee: operation.op.value.delegatee,
+			hpAmount: hpAmounts[index] ?? 0,
+			vestsAmount: String(operation.op.value.vesting_shares),
+			timestamp: new Date(operation.timestamp),
+			blockNumber: operation.block_num,
+			transactionId: operation.trx_id,
+		}));
 
-    const result = await (extended.restApi as any)['hafah-api'].accounts.operations(query);
-    return result.operations_result || [];
-  }
+		return delegations
+			.filter(delegation => delegation.hpAmount > 0)
+			.sort((a, b) => b.hpAmount - a.hpAmount);
+	}
 
-  private async processRawDelegations(
-    rawDelegations: any[],
-    username: string
-  ): Promise<Delegation[]> {
-    // Agrupar por delegador y obtener la más reciente que NO sea 0
-    const delegationsByDelegator = new Map<string, any>();
+	private getLatestOperationByDelegator(
+		operations: RawDelegationOperation[]
+	): Map<string, RawDelegationOperation> {
+		const latestByDelegator = new Map<string, RawDelegationOperation>();
 
-    rawDelegations.forEach(operation => {
-      const { delegator, delegatee, vesting_shares } = operation.op.value;
-      const existing = delegationsByDelegator.get(delegator);
+		for (const operation of operations) {
+			const delegator = operation.op.value.delegator;
+			const existing = latestByDelegator.get(delegator);
 
-      const shouldReplace =
-        !existing || new Date(operation.timestamp) > new Date(existing.timestamp);
+			const isMoreRecent = !existing || new Date(operation.timestamp) > new Date(existing.timestamp);
 
-      if (shouldReplace) {
-        delegationsByDelegator.set(delegator, operation);
-      }
-    });
+			if (isMoreRecent) {
+				latestByDelegator.set(delegator, operation);
+			}
+		}
 
-    // Filtrar operaciones relevantes
-    const relevantOperations = Array.from(delegationsByDelegator.values()).filter(
-      operation => operation.op.value.delegatee === username
-    );
+		return latestByDelegator;
+	}
 
-    if (relevantOperations.length === 0) {
-      return [];
-    }
-
-    // OPTIMIZACIÓN: Convertir todos los VESTS en lote con UNA SOLA llamada a API
-    const vestsList = relevantOperations.map(op => op.op.value.vesting_shares);
-
-    // ✅ DEBUG: Log para ver qué tipos de datos llegan
-    console.log(
-      '🔍 Tipos de VESTS recibidos:',
-      vestsList
-        .slice(0, 3)
-        .map(v => ({ value: v, type: typeof v, constructor: v?.constructor?.name }))
-    );
-
-    const hpAmounts = await this.batchVestsToHP(vestsList);
-
-    // Crear delegaciones usando los HP ya convertidos
-    const delegations: Delegation[] = relevantOperations.map((operation, index) => {
-      const { delegator, delegatee, vesting_shares } = operation.op.value;
-
-      return {
-        delegator,
-        delegatee,
-        hpAmount: hpAmounts[index] || 0, // ✅ Asegurar que siempre sea número
-        vestsAmount: vesting_shares,
-        timestamp: new Date(operation.timestamp),
-        blockNumber: operation.block_num,
-        transactionId: operation.trx_id,
-      };
-    });
-
-    // Filtrar solo las delegaciones activas y ordenar
-    return delegations
-      .filter(delegation => delegation.hpAmount > 0)
-      .sort((a, b) => b.hpAmount - a.hpAmount);
-  }
+	private delay(ms: number): Promise<void> {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
 }

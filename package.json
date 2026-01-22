@@ -24,7 +24,7 @@
     "@astrojs/tailwind": "^6.0.2",
     "@astrojs/ts-plugin": "^1.10.4",
     "@astrojs/vercel": "^8.2.2",
-    "@hiveio/wax": "^1.27.6-rc7",
+    "@hiveio/wax": "1.28.4-rc0",
     "astro": "^5.10.1",
     "keychain-sdk": "^0.9.4",
     "path-to-regexp": "^6.3.0",
