@@ -218,4 +218,98 @@ export function vestsToHp(
 	return vestsAmount * hiveAmount / sharesAmount;
 }
 
+// Delegation operations (type 40)
+const DELEGATION_OPERATION_TYPE = '40';
+
+export interface DelegationOperation {
+	timestamp: string;
+	block: number;
+	trx_id: string | null;
+	operation_id: string;
+	delegator: string;
+	delegatee: string;
+	vesting_shares: string;
+}
+
+export async function fetchDelegationOperationsServer(
+	username: string,
+	toBlockDate?: string
+): Promise<DelegationOperation[]> {
+	const allOperations: DelegationOperation[] = [];
+
+	let currentPage = 1;
+	let totalPages = 1;
+
+	while (currentPage <= totalPages) {
+		const response = await hafahApiCall(username, DELEGATION_OPERATION_TYPE, {
+			page: currentPage,
+			pageSize: 100,
+			toBlock: toBlockDate,
+		});
+
+		if (!response || !response.operations_result || response.operations_result.length === 0) {
+			break;
+		}
+
+		if (currentPage === 1) {
+			totalPages = response.total_pages;
+		}
+
+		for (const op of response.operations_result) {
+			if (op.op.type === 'delegate_vesting_shares_operation') {
+				const value = op.op.value as {
+					delegator?: string;
+					delegatee?: string;
+					vesting_shares?: string | { amount: string; precision: number; nai: string };
+				};
+
+				let vestingShares = '0 VESTS';
+				if (typeof value.vesting_shares === 'string') {
+					vestingShares = value.vesting_shares;
+				} else if (value.vesting_shares && typeof value.vesting_shares === 'object') {
+					const amount = Number(value.vesting_shares.amount) / Math.pow(10, value.vesting_shares.precision);
+					vestingShares = `${amount} VESTS`;
+				}
+
+				allOperations.push({
+					timestamp: op.timestamp,
+					block: op.block,
+					trx_id: op.trx_id,
+					operation_id: op.operation_id,
+					delegator: value.delegator ?? '',
+					delegatee: value.delegatee ?? '',
+					vesting_shares: vestingShares,
+				});
+			}
+		}
+
+		currentPage++;
+
+		if (currentPage <= totalPages) {
+			await new Promise(resolve => setTimeout(resolve, 50));
+		}
+	}
+
+	return allOperations;
+}
+
+// Global props cache for VESTS to HP conversion
+let globalPropsCache: { props: GlobalDynamicProperties; timestamp: number } | null = null;
+const CACHE_DURATION_MS = 5 * 60 * 1000;
+
+export async function vestsToHpServer(vests: string): Promise<number> {
+	const now = Date.now();
+
+	if (!globalPropsCache || now - globalPropsCache.timestamp >= CACHE_DURATION_MS) {
+		const props = await getGlobalDynamicProperties();
+		globalPropsCache = { props, timestamp: now };
+	}
+
+	const vestsParsed = parseAsset(vests);
+	const totalVestingFundHive = parseAsset(globalPropsCache.props.total_vesting_fund_hive);
+	const totalVestingShares = parseAsset(globalPropsCache.props.total_vesting_shares);
+
+	return vestsToHp(vestsParsed, totalVestingFundHive, totalVestingShares);
+}
+
 export type { HafahOperation, HafahOperationsResponse, GlobalDynamicProperties };

@@ -8,11 +8,8 @@
  * - Configuración personalizada por usuario
  */
 
-import {
-  getTotalCurationRewards,
-  curationStats,
-  type CurationStatsResult,
-} from './get-delegations.js';
+import { getTotalCurationRewards } from './get-delegations.js';
+import { curationStatsServer, type CurationStatsResult } from './curation-stats-server.js';
 
 import type { CalculateFilters, CalculationResult } from './calculate-curation.js';
 
@@ -77,7 +74,7 @@ async function calculateDynamicReturnPercentage(
   console.log(`🔍 Calculando % dinámico para ${account} con filtros:`, filters);
 
   // Obtener estadísticas de curación
-  const stats = await curationStats(account);
+  const stats = await curationStatsServer(account);
 
   // Calcular curación en el período específico de los filtros
   const now = new Date();
@@ -226,7 +223,7 @@ export async function getCurationStatsForUI(account: string): Promise<{
   lastUpdate: Date;
 }> {
   try {
-    const stats = await curationStats(account);
+    const stats = await curationStatsServer(account);
 
     return {
       curation24h: stats.total24Hr,

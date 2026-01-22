@@ -1,6 +1,5 @@
 import { decodeFiltersFromUrl } from './filter-validation.js';
-import type { DelegationOperationResponse } from './get-delegations.js';
-import { fetchDelegationOperationsOptimized, vestsToHP } from './get-delegations.js';
+import { fetchDelegationOperationsServer, vestsToHpServer, type DelegationOperation } from './hive-http-client.js';
 import { getCurrentAuthenticatedUser } from './auth/guards.js';
 
 /**
@@ -43,10 +42,12 @@ export interface CalculationResult {
 /**
  * Obtiene la última delegación de cada delegador hasta una fecha de corte
  * @param operations - Array de operaciones de delegación
+ * @param targetAccount - Cuenta objetivo (solo delegaciones TO esta cuenta)
  * @returns Objeto con la última delegación de cada delegador
  */
 function getLatestDelegationsByDelegator(
-  operations: DelegationOperationResponse['operations_result']
+  operations: DelegationOperation[],
+  targetAccount: string
 ): Record<
   string,
   {
@@ -65,8 +66,13 @@ function getLatestDelegationsByDelegator(
   > = {};
 
   for (const op of operations) {
-    const delegator = op.op.value.delegator;
-    const vesting_shares = op.op.value.vesting_shares.amount;
+    // Solo procesar delegaciones HACIA la cuenta objetivo
+    if (op.delegatee !== targetAccount) {
+      continue;
+    }
+
+    const delegator = op.delegator;
+    const vesting_shares = op.vesting_shares;
     const block_num = op.block;
     const timestamp = op.timestamp;
 
@@ -82,7 +88,9 @@ function getLatestDelegationsByDelegator(
 
   // Filtrar los que tienen 0 VESTS (retiro total)
   Object.keys(latest).forEach(delegator => {
-    if (Number(latest[delegator].vesting_shares) === 0) {
+    const vestsStr = latest[delegator].vesting_shares;
+    const vestsNum = parseFloat(vestsStr.replace(/[^0-9.]/g, '')) || 0;
+    if (vestsNum === 0) {
       delete latest[delegator];
     }
   });
@@ -148,11 +156,11 @@ export async function calculateCurationDistribution(
     console.log(`📅 Fecha de corte: ${cutoffDate}`);
 
     // Obtener operaciones hasta la fecha de corte
-    const operations = await fetchDelegationOperationsOptimized(account, cutoffDate);
+    const operations = await fetchDelegationOperationsServer(account, cutoffDate);
     console.log(`📦 Operaciones obtenidas: ${operations.length}`);
 
-    // Obtener última delegación de cada delegador
-    const latestDelegations = getLatestDelegationsByDelegator(operations);
+    // Obtener última delegación de cada delegador (solo delegaciones TO account)
+    const latestDelegations = getLatestDelegationsByDelegator(operations, account);
     console.log(`👥 Delegadores únicos: ${Object.keys(latestDelegations).length}`);
 
     // Procesar delegadores y convertir VESTS a HP
@@ -166,7 +174,7 @@ export async function calculateCurationDistribution(
       }
 
       // Convertir VESTS a HP solo aquí
-      const hp = await vestsToHP(delegationData.vesting_shares);
+      const hp = await vestsToHpServer(delegationData.vesting_shares);
 
       // Excluir delegadores que no tengan HP
 
