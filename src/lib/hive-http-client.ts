@@ -146,7 +146,7 @@ export async function hafahApiCall(
 					'data-size-limit': '200000',
 				});
 
-				if (page && page > 1) {
+				if (page !== null && page !== undefined && page >= 1) {
 					params.append('page', String(page));
 				}
 
