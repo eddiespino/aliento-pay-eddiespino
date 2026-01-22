@@ -67,6 +67,31 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
         detailed: t('memo.templates.detailed'),
         simple: t('memo.templates.simple')
       }
+    },
+    payments: {
+      notifications: {
+        noUser: t('payments.notifications.noUser'),
+        noPayments: t('payments.notifications.noPayments'),
+        noUserRedirecting: t('payments.notifications.noUserRedirecting'),
+        initiating: t('payments.notifications.initiating'),
+        batchProcessing: t('payments.notifications.batchProcessing'),
+        batchStarting: t('payments.notifications.batchStarting'),
+        batchCompleted: t('payments.notifications.batchCompleted'),
+        batchCanceled: t('payments.notifications.batchCanceled'),
+        batchError: t('payments.notifications.batchError'),
+        batchesReset: t('payments.notifications.batchesReset'),
+        allCompleted: t('payments.notifications.allCompleted'),
+        withFailures: t('payments.notifications.withFailures'),
+        withCanceled: t('payments.notifications.withCanceled'),
+        canContinue: t('payments.notifications.canContinue'),
+        success: t('payments.notifications.success'),
+        userCanceled: t('payments.notifications.userCanceled'),
+        error: t('payments.notifications.error'),
+        alreadyInProgress: t('payments.notifications.alreadyInProgress'),
+        noPendingBatches: t('payments.notifications.noPendingBatches'),
+        keychainNotAvailable: t('payments.notifications.keychainNotAvailable'),
+        unknownError: t('payments.notifications.unknownError')
+      }
     }
   } }}>
     window.i18n = translations;

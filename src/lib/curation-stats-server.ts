@@ -61,6 +61,21 @@ interface HafahCurationOperation {
 let globalPropsCache: GlobalPropsCache | null = null;
 const curationStatsCache = new Map<string, CurationStatsCache>();
 
+function isValidCurationOperation(op: unknown): op is HafahCurationOperation {
+	if (!op || typeof op !== 'object') return false;
+	const obj = op as Record<string, unknown>;
+
+	if (typeof obj.timestamp !== 'string') return false;
+	if (typeof obj.block !== 'number') return false;
+	if (typeof obj.operation_id !== 'string') return false;
+	if (!obj.op || typeof obj.op !== 'object') return false;
+
+	const opData = obj.op as Record<string, unknown>;
+	if (opData.type !== 'curation_reward_operation') return false;
+
+	return true;
+}
+
 async function getGlobalPropsWithCache(): Promise<GlobalDynamicProperties> {
 	const now = Date.now();
 
@@ -160,8 +175,8 @@ export async function curationStatsServer(account: string): Promise<CurationStat
 		}
 
 		for (const rawOp of response.operations_result) {
-			const operation = rawOp as unknown as HafahCurationOperation;
-			const reward = parseOperationToCurationReward(operation, globalProps);
+			if (!isValidCurationOperation(rawOp)) continue;
+			const reward = parseOperationToCurationReward(rawOp, globalProps);
 			if (!reward) continue;
 
 			// API returns timestamps without timezone - treat as UTC
