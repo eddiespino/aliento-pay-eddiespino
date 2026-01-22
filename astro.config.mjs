@@ -6,7 +6,7 @@ import { defineConfig } from 'astro/config';
 // https://astro.build/config
 export default defineConfig({
   output: 'server', // Server-side rendering for dynamic content
-  adapter: vercel({}),
+  adapter: vercel(),
   integrations: [tailwind()],
   // Internationalization configuration
   i18n: {
