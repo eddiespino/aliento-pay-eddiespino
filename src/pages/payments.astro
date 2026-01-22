@@ -2,29 +2,14 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../ui/components/header.astro';
 import PaymentHero from '../ui/components/PaymentHero.astro';
-import PaymentsList from '../ui/components/PaymentsList.astro';
 import MemoSettings from '../ui/components/MemoSettings.astro';
 import BrandCard from '../ui/base/BrandCard.astro';
-import { requireAuthentication } from '../middleware';
-import { protectedGetCurationStats } from '../lib/auth/protected-functions';
-import type { Payment } from '../domain/models/Payment';
 import { getCurrentLocale, getTranslation } from '../i18n';
 
-// Get current locale and translation function
 const currentLocale = getCurrentLocale(Astro);
 const t = (key: string) => getTranslation(currentLocale, key);
 
-const isAuthenticated = Astro.locals.isAuthenticated;
 const authenticatedUser: string | null = Astro.locals.user;
-
-// Todo el procesamiento de datos ahora será del lado del cliente
-// Inicializamos con arrays vacíos
-let payments: Payment[] = [];
-let error: string | null = null;
-
-console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente');
----
-
 ---
 
 <Layout title={t('payments.pageTitle')}>
@@ -95,6 +80,21 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
     }
   } }}>
     window.i18n = translations;
+
+    // Safe translation getter - prevents "Cannot read property of undefined" errors
+    window.i18nGet = function(path, fallback) {
+      if (!path) return fallback || '';
+      const keys = path.split('.');
+      let value = window.i18n;
+      for (const key of keys) {
+        if (value === null || value === undefined || typeof value !== 'object') {
+          console.warn('[i18n] Missing translation:', path);
+          return fallback || path;
+        }
+        value = value[key];
+      }
+      return value !== undefined ? value : (fallback || path);
+    };
   </script>
 
   <div class="min-h-screen bg-[var(--bg)]">
@@ -505,6 +505,17 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
   let paymentBatches = [];
   const BATCH_SIZE = 20;
 
+  // Helper para acceso seguro a traducciones de notificaciones
+  function getNotification(key, fallback) {
+    try {
+      const value = window.i18n?.payments?.notifications?.[key];
+      return value || fallback || key;
+    } catch (e) {
+      console.warn('[i18n] Error accessing notification:', key, e);
+      return fallback || key;
+    }
+  }
+
   // Función para mostrar notificaciones
   function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
@@ -629,7 +640,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
 
     try {
       showNotification(
-        window.i18n.payments.notifications.batchProcessing
+        getNotification('batchProcessing', 'Processing batch {current}/{total}')
           .replace('{current}', (batchIndex + 1).toString())
           .replace('{total}', paymentBatches.length.toString())
           .replace('{count}', batch.payments.length.toString()),
@@ -653,7 +664,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
       // Usar directamente requestBroadcast de Keychain
       const result = await new Promise((resolve, reject) => {
         if (!window.hive_keychain) {
-          reject(new Error(window.i18n.payments.notifications.keychainNotAvailable));
+          reject(new Error(getNotification('keychainNotAvailable', 'Hive Keychain not available')));
           return;
         }
 
@@ -661,7 +672,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
           if (response.success) {
             resolve(response);
           } else {
-            reject(new Error(response.message || response.error || window.i18n.payments.notifications.unknownError));
+            reject(new Error(response.message || response.error || getNotification('unknownError', 'Unknown error')));
           }
         });
       });
@@ -677,7 +688,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
         });
 
         showNotification(
-          window.i18n.payments.notifications.batchCompleted
+          getNotification('batchCompleted', 'Batch {index} completed')
             .replace('{index}', (batchIndex + 1).toString())
             .replace('{amount}', batch.totalAmount)
             .replace('{count}', batch.payments.length.toString())
@@ -703,7 +714,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
         batch.result = { canceled: true };
 
         showNotification(
-          window.i18n.payments.notifications.batchCanceled.replace('{index}', (batchIndex + 1).toString()),
+          getNotification('batchCanceled', 'Batch {index} canceled').replace('{index}', (batchIndex + 1).toString()),
           'info'
         );
         batchPaymentInProgress = false;
@@ -721,7 +732,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
         });
 
         showNotification(
-          window.i18n.payments.notifications.batchError
+          getNotification('batchError', 'Batch {index} error: {error}')
             .replace('{index}', (batchIndex + 1).toString())
             .replace('{error}', error.message),
           'error'
@@ -745,18 +756,18 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
   // 🆕 Función principal para ejecutar pagos por lotes
   async function executePaymentsByBatches(startFromBatch = 0) {
     if (batchPaymentInProgress) {
-      showNotification(window.i18n.payments.notifications.alreadyInProgress, 'warning');
+      showNotification(getNotification('alreadyInProgress', 'Batch payment already in progress'), 'warning');
       return;
     }
 
     if (!currentUser) {
-      showNotification(window.i18n.payments.notifications.noUser, 'error');
+      showNotification(getNotification('noUser', 'No authenticated user'), 'error');
       return;
     }
 
     const payments = window.currentPayments || [];
     if (payments.length === 0) {
-      showNotification(window.i18n.payments.notifications.noPayments, 'warning');
+      showNotification(getNotification('noPayments', 'No payments to execute'), 'warning');
       return;
     }
 
@@ -771,7 +782,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
     currentBatchIndex = startFromBatch;
 
     showNotification(
-      window.i18n.payments.notifications.batchStarting
+      getNotification('batchStarting', 'Starting batch {start}/{total}')
         .replace('{start}', (startFromBatch + 1).toString())
         .replace('{total}', paymentBatches.length.toString())
         .replace('{size}', BATCH_SIZE.toString()),
@@ -809,23 +820,23 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
       .filter(r => r.success)
       .reduce((sum, r) => sum + parseFloat(r.amount), 0);
 
-    let summaryMessage = window.i18n.payments.notifications.allCompleted
+    let summaryMessage = getNotification('allCompleted', 'All batches completed!')
       .replace('{successful}', successfulBatches.toString())
       .replace('{payments}', totalSuccess.toString())
       .replace('{amount}', totalAmount.toFixed(3));
 
     if (failedBatches > 0) {
-      summaryMessage += window.i18n.payments.notifications.withFailures
+      summaryMessage += getNotification('withFailures', '\n{failed} failed batches')
         .replace('{failed}', failedBatches.toString());
     }
 
     if (canceledBatches > 0) {
-      summaryMessage += window.i18n.payments.notifications.withCanceled
+      summaryMessage += getNotification('withCanceled', '\n{canceled} canceled batches')
         .replace('{canceled}', canceledBatches.toString());
     }
 
     if (canceledBatches > 0 || failedBatches > 0) {
-      summaryMessage += window.i18n.payments.notifications.canContinue;
+      summaryMessage += getNotification('canContinue', '\nYou can continue with pending batches');
     }
 
     showNotification(
@@ -850,7 +861,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
 
       executePaymentsByBatches(lastPendingBatch);
     } else {
-      showNotification(window.i18n.payments.notifications.noPendingBatches, 'info');
+      showNotification(getNotification('noPendingBatches', 'No pending batches to continue'), 'info');
     }
   }
 
@@ -931,18 +942,18 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
   // Función para ejecutar pagos usando el servicio de múltiples transferencias
   async function executePayments(paymentsToExecute, groupName = 'todos los pagos') {
     if (!currentUser) {
-      showNotification(window.i18n.payments.notifications.noUser, 'error');
+      showNotification(getNotification('noUser', 'No authenticated user'), 'error');
       return;
     }
 
     if (!paymentsToExecute || paymentsToExecute.length === 0) {
-      showNotification(window.i18n.payments.notifications.noPayments, 'warning');
+      showNotification(getNotification('noPayments', 'No payments to execute'), 'warning');
       return;
     }
 
     try {
       showNotification(
-        window.i18n.payments.notifications.initiating.replace('{count}', paymentsToExecute.length.toString()),
+        getNotification('initiating', 'Initiating {count} payments...').replace('{count}', paymentsToExecute.length.toString()),
         'info'
       );
 
@@ -966,7 +977,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
       // Usar directamente requestBroadcast de Keychain
       const result = await new Promise((resolve, reject) => {
         if (!window.hive_keychain) {
-          reject(new Error(window.i18n.payments.notifications.keychainNotAvailable));
+          reject(new Error(getNotification('keychainNotAvailable', 'Hive Keychain not available')));
           return;
         }
 
@@ -974,7 +985,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
           if (response.success) {
             resolve(response);
           } else {
-            reject(new Error(response.message || response.error || window.i18n.payments.notifications.unknownError));
+            reject(new Error(response.message || response.error || getNotification('unknownError', 'Unknown error')));
           }
         });
       });
@@ -983,7 +994,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
         const totalAmount = paymentsToExecute.reduce((sum, p) => sum + p.amount, 0);
 
         showNotification(
-          window.i18n.payments.notifications.success
+          getNotification('success', 'Success! {name} executed.')
             .replace('{name}', groupName)
             .replace('{amount}', totalAmount.toFixed(3))
             .replace('{txId}', result.result?.id || ''),
@@ -1003,12 +1014,12 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
       if (error && error.message && error.message.includes('Request was canceled by the user')) {
         // Cancelación normal del usuario - no es un error
         console.log(`👤 [PAYMENTS] Usuario canceló la operación`);
-        showNotification(window.i18n.payments.notifications.userCanceled, 'info');
+        showNotification(getNotification('userCanceled', 'Operation canceled by user'), 'info');
       } else {
         // Error real
         console.error(`❌ [PAYMENTS] Error real:`, error);
         showNotification(
-          window.i18n.payments.notifications.error
+          getNotification('error', 'Error executing {name}: {error}')
             .replace('{name}', groupName)
             .replace('{error}', error.message),
           'error'
@@ -1047,7 +1058,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
     currentUser = localStorage.getItem('authenticated_user');
 
     if (!currentUser) {
-      showNotification(window.i18n.payments.notifications.noUserRedirecting, 'warning');
+      showNotification(getNotification('noUserRedirecting', 'No authenticated user. Redirecting...'), 'warning');
       setTimeout(() => (window.location.href = '/'), 2000);
       return;
     }
@@ -1116,7 +1127,7 @@ console.log('💻 [SERVER] Página de pagos - procesamiento del lado del cliente
           currentBatchIndex = 0;
           batchPaymentInProgress = false;
           updateBatchProgress();
-          showNotification(window.i18n.payments.notifications.batchesReset, 'info');
+          showNotification(getNotification('batchesReset', 'Batches have been reset'), 'info');
         });
       }
     }
